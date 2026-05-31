@@ -98,7 +98,7 @@ static Str8 get_view_bin_data(Context *context, GLTFModel *model, cgltf_buffer_v
     if(entry) {
 	return str8_substr(entry->data, view->offset, view->size);
     } else {
-	Str8 buffer_data = file_read_full_to_str8(context, path);
+	Str8 buffer_data = file_read_full_to_str8(path);
 	Str8 view_data = str8_substr(buffer_data, view->offset, view->size);
 	GLTFBin new_entry = {str8_copy(context->persistent_arena, path), buffer_data};
 	list_push(&model->bin_files, new_entry);
@@ -156,7 +156,7 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 	cgltf_data *data, cgltf_node *node, Mat4 parent_world_matrix);
 
 GLTFModel *gltf_load(Context *context, GLTFLoadParams *params) {
-    GLTFModel *result = arena_alloc<GLTFModel>(context->persistent_arena);
+    GLTFModel *result = base::alloc<GLTFModel>();
     cgltf_data *data = NULL;
     Str8 file_dir = str8_dir_finish_with_slash(context->frame_arena, params->file_dir);
     Str8 path = str8_cat(context->frame_arena, file_dir, params->file_name);
@@ -225,7 +225,7 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 	    node_meta->has_skin = JK_TRUE;
 	    node_meta->skin_data = {
 		skin->joints,
-		arena_alloc<Mat4>(context->persistent_arena, skin->joints_count),
+		base::alloc<Mat4>(skin->joints_count),
 		skin->joints_count
 	    };
 	    // TODO(jdk): can multiple sets of inverse bind matrices share the same buffer view??

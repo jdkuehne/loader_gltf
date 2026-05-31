@@ -5,7 +5,7 @@
 #include "base/str.hpp"
 #include "base/mat.hpp"
 #include "base/arena.hpp"
-#include "base/file.hpp"
+#include "base/os/file.hpp"
 #include "base/list.hpp"
 #include "base/link.hpp"
 #include "base/stack.hpp"
@@ -13,7 +13,7 @@
 
 #include "ext/cgltf.h"
 
-#include <glad/gl.h>
+#include "ext/glad/gl.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -6,20 +6,22 @@
 #include "base/arena.hpp"
 #include "base/str.hpp"
 
-#include "window.hpp"
 #include "shader.hpp"
 #include "gltf_load.hpp"
 #include "ui.hpp"
 
-#include <stb_image.h>
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
-#include "ext/cgltf.h"
+#include "ext/stb_image.h"
+#include "ext/glad/gl.h"
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
+
+// @NOTE(jdk): apparently the fileapi header included for file.hpp defined APIENTRY and
+// the winapi stuff in glfw does so as well (redefinition), but with include guards,
+// so the one with include guards has to be at the end
+#include "window.hpp"
 
 #define JK_DUMP_PERSISTENT_ALLOC 0
 #define JK_PRINT_ALLOCATOR_STATE 0
@@ -72,7 +74,7 @@ int main() {
     GLFWwindow *window = window_setup();
 
     // jdk: shaders
-    U32 shader_program = create_shader_vf(
+    U32 shader_program = create_shader_vf(&default_context,
 	    "./src/shaders/main_vs.glsl",
 	    "./src/shaders/main_fs.glsl");
     U32 loc_world = glGetUniformLocation(shader_program, "world");
@@ -175,7 +177,7 @@ int main() {
 }
 
 #define GLAD_GL_IMPLEMENTATION
-#include <glad/gl.h>
+#include "ext/glad/gl.h"
 #define CGLTF_IMPLEMENTATION
 #include "ext/cgltf.h"
 

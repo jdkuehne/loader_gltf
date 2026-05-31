@@ -65,8 +65,8 @@ void draw_textbox_no_background(Context *context, const TextObject *text,
 				U64 window_width, U64 window_height) {
     if(!shader_info) {
 	TextShaderInfo *p = arena_alloc<TextShaderInfo>(context->persistent_arena);
-	p->program = create_shader_vf("./src/shaders/text_vs.glsl",
-				      "./src/shaders/text_fs.glsl");
+	p->program = create_shader_vf(context, "./src/shaders/text_vs.glsl",
+		"./src/shaders/text_fs.glsl");
 	p->location_fg_color    = glGetUniformLocation(p->program, "fg_color");
 	p->location_font_scale  = glGetUniformLocation(p->program, "font_scale");
 	p->location_upper_left  = glGetUniformLocation(p->program, "upper_left");

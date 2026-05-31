@@ -1,26 +1,10 @@
 #include "shader.hpp"
 
-static I64 fsize(I32 fd)
-{
-    struct stat filestatus;
-    I32 err = fstat(fd, &filestatus);
-    if(err) return -1;
-    return filestatus.st_size;
-}
-
-static I32 compile_shader_file(GLenum type, const char *path, U32 *shader_out)
-{
-    // Read shader file to buffer
-    I32 file = open(path, O_RDONLY);
-    if(file == -1) return JK_ERROR_FILEOPEN;
-    I64 file_size = fsize(file);
-    char *source = (char *)malloc(file_size);
-    read(file, source, file_size);
-    close(file);
-
+static I32 compile_shader_file(Context *context, GLenum type, const char *path, U32 *shader_out) {
+    Str8 source = file_read_full_to_str8(str8c(path));
     I32 compilation_success;
     U32 shader = glCreateShader(type);
-    glShaderSource(shader, 1, (const char **)&source, (const I32 *)&file_size);
+    glShaderSource(shader, 1, (const char **)&source.start, (const I32 *)&file_size);
     free(source);
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &compilation_success);
@@ -35,7 +19,7 @@ static I32 compile_shader_file(GLenum type, const char *path, U32 *shader_out)
     return JK_SUCCESS;
 }
 
-U32 create_shader_vf(const char *vs_path, const char *fs_path) {
+U32 create_shader_vf(Context *context, const char *vs_path, const char *fs_path) {
     //shader compilation
     I32 compile_err;
     U32 vs, fs;
@@ -64,7 +48,7 @@ U32 create_shader_vf(const char *vs_path, const char *fs_path) {
     return program;
 }
 
-U32 create_shader_vgf(const char *vs_path, const char *gs_path, const char *fs_path) {
+U32 create_shader_vgf(Context *context, const char *vs_path, const char *gs_path, const char *fs_path) {
     //shader compilation
     I32 compile_err;
     U32 vs, fs, gs;

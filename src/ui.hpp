@@ -8,8 +8,8 @@
 
 #include "shader.hpp"
 
-#include <glad/gl.h>
-#include <stb_easy_font.h>
+#include "ext/glad/gl.h"
+#include "ext/stb_easy_font.h"
 
 typedef struct TextObject {
     // jdk: in pixels, but scales with font size

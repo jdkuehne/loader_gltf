@@ -4,8 +4,8 @@
 // #include "camera.hpp"
 #include "base/core.hpp"
 
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
+#include "ext/glad/gl.h"
+#include "ext/GLFW/glfw3.h"
 
 #include <stdlib.h>
 #include <stdio.h>

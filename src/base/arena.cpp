@@ -4,7 +4,7 @@ Arena make_arena(U64 size) {
     Arena result = {0};
     result.memory = malloc(size);
     result.size = size;
-    result.type = BackingBuffer_HeapAlloc;
+    result.type = BackingBufferType::HeapAlloc;
     return result;
 }
 
@@ -20,7 +20,7 @@ Arena make_arena_from_u8_array(U8 *backing_buffer, U64 size) {
     Arena result = {0};
     result.memory = backing_buffer;
     result.size = size;
-    result.type = BackingBuffer_ArrayU8;
+    result.type = BackingBufferType::ArrayU8;
     return result;
 }
 
@@ -30,12 +30,13 @@ Arena make_arena_from_u8_array_cleared(U8 *backing_buffer, U64 size, U8 clear_va
     return result;
 }
 
-void *arena_alloc(Arena *arena, U64 size, U64 alignment_pow2) {
-    if(!arena) { exit(JK_ERROR_INVALID_ARENA_PTR); }
-    assert(is_pow2(alignment_pow2));
-    U64 aligned_offset = align_pow2((U64)arena->memory + arena->offset, alignment_pow2) - (U64)arena->memory;
+U8 *arena_alloc(Arena *arena, U64 size, U64 alignment) {
+    if(arena == NULL)
+	exit(JK_ERROR_INVALID_ARENA_PTR);
+    assert(is_pow2(alignment));
+    U64 aligned_offset = align_pow2((U64)arena->memory + arena->offset, alignment) - (U64)arena->memory;
     assert(aligned_offset + size <= arena->size);
-    void *result = (U8 *)arena->memory + aligned_offset;
+    U8 *result = (U8 *)arena->memory + aligned_offset;
     arena->offset = aligned_offset + size;
     // jdk: zero memory
     memset(result, 0, size);
@@ -51,7 +52,7 @@ void arena_reset(Arena *arena) {
 }
 
 void destroy_arena(Arena *arena) {
-    if(arena->type == BackingBuffer_HeapAlloc) {
+    if(arena->type == BackingBufferType::HeapAlloc) {
 	free(arena->memory);
     }
     arena->memory = NULL;

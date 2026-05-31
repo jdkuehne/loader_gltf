@@ -7,6 +7,8 @@
 // jdk: attributes
 #if JK_COMPILER_GCC
 # define jk_forceinline __attribute__((always_inline))
+#elif JK_COMPILER_MSVC
+# define jk_forceinline __forceinline
 #else
 # error "no known force inline intrinsic for this compiler"
 #endif
@@ -33,6 +35,10 @@ typedef int64_t   B64;
 
 // NOTE(jdk): used for allocators and stuff for one, I simply prefer the look of it
 #define JK_SINGLE_ELEMENT 1
+
+inline U64 compose_uint(U32 low, U32 high) {
+    return ((U64)low | ((U64)high << 32));
+}
 
 //##################################################
 // jdk: Slices and Arrays (templates and instantiations)
@@ -110,6 +116,8 @@ F32 clamp(F32 x, F32 min, F32 max);
 
 #if JK_COMPILER_GCC
 # define JK_TypeOf(T) typeof(T)
+#elif JK_COMPILER_MSVC
+# define JK_TypeOf(T) __typeof(T)__
 #else
 # error "no known typeof intrinsic for this compiler"
 #endif
@@ -121,6 +129,8 @@ U64 align_pow2(U64 pos, U64 alignment_pow2);
 
 #if JK_COMPILER_GCC
 # define JK_Trap() __builtin_trap()
+#elif JK_COMPILER_MSVC
+# define JK_Trap() __debugbreak()
 #else
 # error "no trap for this compiler"
 #endif

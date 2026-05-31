@@ -2,18 +2,16 @@
 #define SHADER_H
 
 #include "base/core.hpp"
+#include "base/context.hpp"
+#include "base/os/file.hpp"
 
-#include <glad/gl.h>
+#include "ext/glad/gl.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
-
-U32 create_shader_vf(const char *vs_path, const char *fs_path);
-U32 create_shader_vgf(const char *vs_path, const char *gs_path, const char *fs_path);
+U32 create_shader_vf(Context *context, const char *vs_path, const char *fs_path);
+U32 create_shader_vgf(Context *context, const char *vs_path, const char *gs_path, const char *fs_path);
 void delete_shader(U32 program);
 
 /*
