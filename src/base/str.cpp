@@ -1,5 +1,8 @@
 #include "str.hpp"
 
+namespace base
+{
+
 //##################################################
 // jdk: char characterisation
 B8 char_is_space(U8 c) {
@@ -51,8 +54,8 @@ Str8 str8_range(U8 *first, U8 *one_past_last) {
     return str8(first, (U64)(one_past_last - first));
 }
 
-Str8 str8_alloc_buffer(Arena *arena, U64 len) {
-    return str8(arena_alloc<U8>(arena, len), len);
+Str8 str8_alloc_buffer(U64 len, Allocator *allocator) {
+    return str8(alloc(len, allocator), len);
 }
 
 char *cstr_alloc_buffer(Arena *arena, U64 len) {
@@ -322,3 +325,5 @@ void putln_str8(Str8 str) {
     }
     putchar('\n');
 }
+
+} // namespace base

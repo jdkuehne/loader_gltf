@@ -3,11 +3,8 @@
 
 #include "core.hpp"
 
-#include <stdlib.h>
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-
+namespace base::mem
+{
 
 enum class BackingBufferType {
     HeapAlloc,
@@ -20,7 +17,6 @@ struct Arena {
     U64 offset;
     BackingBufferType type;
 };
-
 
 // TODO(jdk): add resize allocation? add prev offset to know if the allocation to
 // resize is the latest one (in that case you could just increase offset and return the same pointer)
@@ -42,23 +38,6 @@ inline U8 *arena_alloc_wrapper(void *arena, U64 size, U64 alignment) {
     return arena_alloc((Arena *)arena, size, alignment);
 }
 
-/*
-template <typename T = U8>
-T *arena_alloc(Arena *arena, U64 count = JK_SINGLE_ELEMENT, U64 alignment_pow2 = JK_AlignOf(T)) {
-    if(!arena) {
-	exit(JK_ERROR_INVALID_ARENA_PTR);
-    }
-    assert(is_pow2(alignment_pow2));
-    T *aligned_ptr = (T *)align_pow2((U64)arena->memory + arena->offset, alignment_pow2);
-    U64 aligned_offset = (U64)aligned_ptr - (U64)arena->memory;
-    U64 alloc_size = count * sizeof(T);
-    assert(aligned_offset + alloc_size <= arena->size);
-    arena->offset = aligned_offset + alloc_size;
-    memset(aligned_ptr, 0, alloc_size);
-    return aligned_ptr;
-}
-*/
-
 void arena_free(Arena *arena, void *allocation);
 inline void arena_free_wrapper(void *arena, void *allocation) {
     return arena_free((Arena *)arena, allocation);
@@ -67,5 +46,7 @@ void arena_reset(Arena *arena);
 void destroy_arena(Arena *arena);
 ArenaSavepoint arena_make_savepoint(Arena *arena);
 void arena_savepoint_reset(ArenaSavepoint *savepoint);
+
+} /*namespace base::mem*/
 
 #endif

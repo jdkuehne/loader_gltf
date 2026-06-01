@@ -1,5 +1,8 @@
 #include "mat.hpp"
 
+namespace base
+{
+
 Mat4 mat4(F32 diagonal) {
     Mat4 result = {0};
     for(U64 i = 0; i < 4; ++i) {
@@ -150,3 +153,5 @@ result = {
     m1[1][0] * m2[0][0] + m1[1][1] * m2[1][0],   m1[1][0] * m2[0][1] + m1[1][1] * m2[1][1],
 };
 */
+
+} /*namespace base*/

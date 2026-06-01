@@ -1,5 +1,8 @@
 #include "vec.hpp"
 
+namespace base
+{
+
 Vec3 vec3(F32 x, F32 y, F32 z) {
     Vec3 result = { .v = { x, y, z } };
     return result;
@@ -111,3 +114,5 @@ F32 *lerp(Arena *arena, F32 *a, F32 *b, U64 count, F32 f) {
     }
     return result;
 }
+
+} /*namespace base*/

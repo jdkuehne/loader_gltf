@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+namespace base
+{
+
 //##################################################
 // jdk: attributes
 #if JK_COMPILER_GCC
@@ -36,35 +39,12 @@ typedef int64_t   B64;
 // NOTE(jdk): used for allocators and stuff for one, I simply prefer the look of it
 #define JK_SINGLE_ELEMENT 1
 
-inline U64 compose_uint(U32 low, U32 high) {
-    return ((U64)low | ((U64)high << 32));
-}
+inline U64 compose_uint(U32 low, U32 high) { return ((U64)low | ((U64)high << 32)); }
 
 //##################################################
 // jdk: Slices and Arrays (templates and instantiations)
 // TODO(jdk): maybe change this slice stuff
 #define JK_ArrayLength(arr) sizeof(arr)/sizeof((arr)[0])
-
-#define JK_GenType_Slice(T)\
-    typedef struct Slice##T {\
-	T *ptr;\
-	U64 len;\
-    } Slice##T
-#define JK_GenFnSig_slice(T)\
-    Slice##T JK_CONSTRUCTOR_Slice##T(T *ptr, U64 len)
-#define JK_GenFn_slice(T)\
-    JK_GenFnSig_slice(T) {\
-	Slice##T result = {ptr, len};\
-	return result;\
-    }
-
-#define JK_SliceFromArray(arr) JK_CONSTRUCTOR_Slice##typeof((arr)[0])((arr), JK_ArrayLength(arr))
-
-#define JK_StackPush(stack, x) do {\
-    assert((stack)->len + 1 <= (stack)->cap);\
-    (stack)->buf[(stack)->len] = (x);\
-    (stack)->len++;\
-} while(0)
 
 //##################################################
 // jdk: constants
@@ -95,9 +75,9 @@ inline U64 compose_uint(U32 low, U32 high) {
 
 //##################################################
 // jdk: number ranges
-F32 min(F32 a, F32 b);
-F32 max(F32 a, F32 b);
-F32 clamp(F32 x, F32 min, F32 max);
+inline F32 min(F32 a, F32 b) { return (a < b) ? a : b; }
+inline F32 max(F32 a, F32 b) { return (a > b) ? a : b; }
+inline F32 clamp(F32 x, F32 min, F32 max) { return (x < min) ? min : ((x > max) ? max : x); }
 
 // NOTE(jdk): only macros are prefixed with JK because those wouldn't get pointed out
 // as second definition or anything by compiler
@@ -126,6 +106,14 @@ F32 clamp(F32 x, F32 min, F32 max);
 B8 is_pow2(U64 x);
 B8 is_pow2_or_zero(U64 x);
 U64 align_pow2(U64 pos, U64 alignment_pow2);
+
+inline B8 is_pow2(U64 x) { return x != 0 && (x & (x - 1)) == 0; }
+inline B8 is_pow2_or_zero(U64 x) { return (x & (x - 1)) == 0; }
+inline U64 align_pow2(U64 pos, U64 alignment) {
+    assert(is_pow2(alignment) && "cannot align if not power of two");
+    U64 modulo_mask = ~(alignment_pow2 - 1);
+    return (pos + alignment_pow2 - 1) & modulo_mask;
+}
 
 #if JK_COMPILER_GCC
 # define JK_Trap() __builtin_trap()
@@ -160,5 +148,7 @@ U64 align_pow2(U64 pos, U64 alignment_pow2);
 // jdk: allocation errors
 #define JK_ERROR_UNINITIALIZED_ARENA 50
 #define JK_ERROR_INVALID_ARENA_PTR 51
+
+} /*namespace base*/
 
 #endif // CORE_H

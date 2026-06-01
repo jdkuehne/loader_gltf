@@ -1,5 +1,7 @@
 #include "file.hpp"
 
+// @TODO(jdk): make this one work as well 
+
 B8 file_exists(Str8 path, Allocator temp_allocator) {
     struct stat st;
     return stat(cstr_copy_from_str8(path, temp_allocator), &st) == -1;

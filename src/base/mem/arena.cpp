@@ -1,5 +1,13 @@
 #include "arena.hpp"
 
+#include <stdlib.h>
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+
+namespace base::mem
+{
+
 Arena make_arena(U64 size) {
     Arena result = {0};
     result.memory = malloc(size);
@@ -71,3 +79,5 @@ void arena_savepoint_reset(ArenaSavepoint *savepoint) {
     savepoint->arena->offset = savepoint->offset;
     memset(savepoint, 0, sizeof(*savepoint));
 }
+
+} /*namespace base::mem*/

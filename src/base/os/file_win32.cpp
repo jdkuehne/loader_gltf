@@ -3,12 +3,12 @@
 namespace base
 {
 
-B8 file_exists(Str8 path, Allocator temp_allocator) {
+B8 file_exists(Str8 path, Allocator *temp_allocator) {
     return (GetFileAttributesA(cstr_copy_from_str8(path, temp_allocator)) != INVALID_FILE_ATTRIBUTES);
 }
 
 FileDescriptor file_open(Str8 path, FileAccessFlag access_flag, FileCreateFlag create_flag,
-	Allocator temp_allocator) {
+	Allocator *temp_allocator) {
     char *path_cstr = cstr_copy_from_str8(path, temp_allocator);
     HANDLE result = CreateFileA(path_cstr, access_flag, 0 /*share*/, NULL,
 	    create_flag, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -27,7 +27,7 @@ U64 file_get_size(FileDescriptor fd) {
     return compose_uint(file_information->nFileSizeLow, file_information->nFileSizeHigh);
 }
 
-U64 file_get_size_at_path(Str8 path, Allocator temp_allocator) {
+U64 file_get_size_at_path(Str8 path, Allocator *temp_allocator) {
     BY_HANDLE_FILE_INFORMATION file_information = {};
     FileDescriptor fd = file_open(cstr_copy_from_str8(path, temp_allocator), FileAccessFlag::ReadOnly,
 	    FileCreateFlag::NoCreate, temp_allocator);
@@ -54,7 +54,7 @@ U64 file_read(FileDescriptor fd, void *buffer, U64 count) {
 }
 
 // jdk: this one's identical to the linux version
-Str8 file_read_full_to_str8(Str8 path, Allocator file_allocator, Allocator temp_allocator) {
+Str8 file_read_full_to_str8(Str8 path, Allocator *file_allocator, Allocator *temp_allocator) {
     FileDescriptor fd = file_open(path, FileAccessFlag::ReadOnly, FileCreateFlag::NoCreate,
 	    temp_allocator);
     U64 file_size = file_get_size(fd);

@@ -5,6 +5,9 @@
 #include "arena.hpp"
 #include <math.h>
 
+namespace base
+{
+
 typedef union Vec2F32 {
     struct {
 	F32 x, y;
@@ -50,5 +53,7 @@ Vec3 vec3_scale_default();
 Vec2 vec2           (F32 x, F32 y);
 
 F32 *lerp(Arena *arena, F32 *a, F32 *b, U64 count, F32 f);
+
+} /*namespace base*/
 
 #endif // VEC_H

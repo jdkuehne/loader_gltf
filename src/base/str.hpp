@@ -3,13 +3,17 @@
 
 #include "core.hpp"
 #include "arena.hpp"
+#include "allocator.hpp"
 
 #include <math.h>
 
-typedef struct Str8 {
+namespace base
+{
+
+struct Str8 {
     U8 *start;
     U64 len;
-} Str8;
+};
 
 B8 char_is_space(U8 c);
 B8 char_is_lower(U8 c);
@@ -25,8 +29,8 @@ Str8 str8_cstr(const char *cstr);
 Str8 str8c(const char *cstr);
 Str8 str8_range(U8 *first, U8 *one_past_last);
 
-Str8 str8_alloc_buffer(Arena *arena, U64 len);
-char *cstr_alloc_buffer(Arena *arena, U64 len);
+Str8 str8_alloc_buffer(U64 len, Allocator *allocator = &default_allocator);
+char *cstr_alloc_buffer(U64 len, Allocator *allocator);
 
 U8 *str8_first(Str8 str);
 U8 *str8_last(Str8 str);
@@ -59,5 +63,7 @@ Str8 str8_from_f32(Arena *arena, F32 x, U64 decimal_places);
 
 void put_str8(Str8 str);
 void putln_str8(Str8 str);
+
+} // namespace base
 
 #endif
