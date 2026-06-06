@@ -1,8 +1,5 @@
 #include "vec.hpp"
 
-namespace base
-{
-
 Vec3 vec3(F32 x, F32 y, F32 z) {
     Vec3 result = { .v = { x, y, z } };
     return result;
@@ -105,8 +102,8 @@ Vec2 vec2(F32 x, F32 y) {
     return result;
 }
 
-F32 *lerp(Arena *arena, F32 *a, F32 *b, U64 count, F32 f) {
-    F32 *result = arena_alloc<F32>(arena, count);
+F32 *lerp(F32 *a, F32 *b, U64 count, F32 f, Allocator *allocator) {
+    F32 *result = mem_alloc<F32>(count, allocator);
     for(U64 i = 0; i < count; ++i) {
 	F32 fa = (1.f - f);
 	F32 fb = f;
@@ -114,5 +111,3 @@ F32 *lerp(Arena *arena, F32 *a, F32 *b, U64 count, F32 f) {
     }
     return result;
 }
-
-} /*namespace base*/

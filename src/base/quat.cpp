@@ -1,8 +1,5 @@
 #include "quat.hpp"
 
-namespace base
-{
-
 #define JK_QUAT_ALMOST_ONE 0.9999f
 #define JK_QUAT_ALMOST_NEGATIVE_ONE -0.9999f
 
@@ -130,5 +127,3 @@ Quat slerp(Quat a, Quat b, F32 p) {
     F32 kb = sin(pb * omega) * sin_omega_inverse;
     return _quat_add_two_scaled(a, ka, b, kb);
 }
-
-} /*namespace base*/

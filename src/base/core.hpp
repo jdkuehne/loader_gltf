@@ -2,9 +2,7 @@
 #define CORE_H
 
 #include <stdint.h>
-
-namespace base
-{
+#include <assert.h>
 
 //##################################################
 // jdk: attributes
@@ -111,8 +109,8 @@ inline B8 is_pow2(U64 x) { return x != 0 && (x & (x - 1)) == 0; }
 inline B8 is_pow2_or_zero(U64 x) { return (x & (x - 1)) == 0; }
 inline U64 align_pow2(U64 pos, U64 alignment) {
     assert(is_pow2(alignment) && "cannot align if not power of two");
-    U64 modulo_mask = ~(alignment_pow2 - 1);
-    return (pos + alignment_pow2 - 1) & modulo_mask;
+    U64 modulo_mask = ~(alignment - 1);
+    return (pos + alignment - 1) & modulo_mask;
 }
 
 #if JK_COMPILER_GCC
@@ -148,7 +146,5 @@ inline U64 align_pow2(U64 pos, U64 alignment) {
 // jdk: allocation errors
 #define JK_ERROR_UNINITIALIZED_ARENA 50
 #define JK_ERROR_INVALID_ARENA_PTR 51
-
-} /*namespace base*/
 
 #endif // CORE_H

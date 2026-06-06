@@ -3,17 +3,16 @@
 static TextShaderInfo *shader_info = NULL;
 
 // NOTE(jdk): new indicates that result is heap allocated via the context's heap_alloc
-TextObject *new_text_object(Context *context, Str8 text) {
-    TextObject *result = (TextObject *)context->heap_alloc(sizeof(TextObject));
-    char *text_cstr = cstr_copy_from_str8(context->frame_arena, text);
+TextObject *new_text_object(Str8 text) {
+    TextObject *result = mem_alloc<TextObject>();
+    char *text_cstr = cstr_copy_from_str8(text, &default_temp_allocator);
 
     U64 bufsize = text.len * 512;
-    void *buffer = arena_alloc(context->frame_arena, bufsize,
-					   JK_AlignOf(F32));
+    void *buffer = mem_alloc<F32>(bufsize, &default_temp_allocator);
     U64 num_quads = stb_easy_font_print(0.f, 0.f, text_cstr, NULL, buffer, bufsize);
     U64 num_indices = num_quads * 6;
     U64 indices_bufsize = num_indices * sizeof(U32);
-    U32 *indices_buffer = arena_alloc<U32>(context->frame_arena, indices_bufsize);
+    U32 *indices_buffer = mem_alloc<U32>(indices_bufsize, &default_temp_allocator);
     // jdk: fill a index buffer that draws as if it was GL_QUADS (deprecated opengl feature)
     for(U64 i = 0; i < num_quads; ++i) {
 	U64 i_offset = 6 * i;
@@ -58,14 +57,23 @@ TextObject *new_text_object(Context *context, Str8 text) {
     return result;
 }
 
+void delete_text_object(TextObject *obj) {
+    if(obj) {
+	glDeleteBuffers(1, &obj->vbo);
+	glDeleteBuffers(1, &obj->ebo);
+	glDeleteVertexArrays(1, &obj->vao);
+	mem_free(obj);
+    }
+}
+
 // jdk: offsets are in pixels
-void draw_textbox_no_background(Context *context, const TextObject *text,
+void draw_textbox_no_background(const TextObject *text,
 				Vec3 color, F32 font_scale,
 				U64 offset_x, U64 offset_y,
 				U64 window_width, U64 window_height) {
     if(!shader_info) {
-	TextShaderInfo *p = arena_alloc<TextShaderInfo>(context->persistent_arena);
-	p->program = create_shader_vf(context, "./src/shaders/text_vs.glsl",
+	TextShaderInfo *p = mem_alloc<TextShaderInfo>();
+	p->program = create_shader_vf("./src/shaders/text_vs.glsl",
 		"./src/shaders/text_fs.glsl");
 	p->location_fg_color    = glGetUniformLocation(p->program, "fg_color");
 	p->location_font_scale  = glGetUniformLocation(p->program, "font_scale");

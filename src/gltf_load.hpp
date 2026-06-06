@@ -4,12 +4,9 @@
 #include "base/core.hpp"
 #include "base/str.hpp"
 #include "base/mat.hpp"
-#include "base/arena.hpp"
+#include "base/mem/allocator.hpp"
 #include "base/os/file.hpp"
-#include "base/list.hpp"
-#include "base/link.hpp"
-#include "base/stack.hpp"
-#include "base/slice.hpp"
+#include "base/containers.hpp"
 
 #include "ext/cgltf.h"
 
@@ -114,11 +111,11 @@ struct GLTFLoadParams {
     Str8 bin_dir;
 };
 
-GLTFModel *gltf_load(Context *context, GLTFLoadParams *params);
+GLTFModel *gltf_load(GLTFLoadParams *params);
 // TODO(jdk): implement destroy later
-void gltf_destroy(Context *context, GLTFModel *model);
+void gltf_destroy(GLTFModel *model);
 
-void gltf_animate(Context *context, GLTFModel *model);
+void gltf_animate(GLTFModel *model);
 void gltf_draw(GLTFModel *model);
 
 #endif // GLTF_LOAD_H

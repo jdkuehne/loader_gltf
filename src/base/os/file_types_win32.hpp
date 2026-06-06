@@ -4,9 +4,6 @@
 // @TODO(jdk): replace with correct include
 #include <windows.h>
 
-namespace base
-{
-
 using FileDescriptor = HANDLE;
 
 enum class FileAccessFlag : DWORD {
@@ -21,7 +18,5 @@ enum class FileCreateFlag : DWORD {
     CreateOrTruncate = CREATE_NEW || TRUNCATE_EXISTING,
     NoCreate = OPEN_EXISTING,
 };
-
-}
 
 #endif

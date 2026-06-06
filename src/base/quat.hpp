@@ -12,9 +12,6 @@
 ///
 /// TODO(jdk): write about multiplication and overall more about the complex number interpretation
 
-namespace base
-{
-
 typedef union QuatF32 {
     struct {
 	F32 x, y, z, w;
@@ -51,7 +48,5 @@ Quat quat_normalize(Quat q);
 
 // jdk: honestly the only thing that's useful here
 Quat slerp(Quat a, Quat b, F32 p);
-
-} /*namespace base*/
 
 #endif

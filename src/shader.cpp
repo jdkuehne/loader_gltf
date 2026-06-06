@@ -1,11 +1,17 @@
 #include "shader.hpp"
 
-static I32 compile_shader_file(Context *context, GLenum type, const char *path, U32 *shader_out) {
+#include "base/mem/allocator.hpp"
+#include <stdio.h>
+#include <stdlib.h>
+
+// @TODO(jdk): allocators are implicit defaults, change that?
+
+static I32 compile_shader_file(GLenum type, const char *path, U32 *shader_out) {
     Str8 source = file_read_full_to_str8(str8c(path));
     I32 compilation_success;
     U32 shader = glCreateShader(type);
-    glShaderSource(shader, 1, (const char **)&source.start, (const I32 *)&file_size);
-    free(source);
+    glShaderSource(shader, 1, (const char **)&source.start, (const I32 *)&source.len);
+    mem_free(source.start);
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &compilation_success);
     if(!compilation_success) {
@@ -19,7 +25,7 @@ static I32 compile_shader_file(Context *context, GLenum type, const char *path, 
     return JK_SUCCESS;
 }
 
-U32 create_shader_vf(Context *context, const char *vs_path, const char *fs_path) {
+U32 create_shader_vf(const char *vs_path, const char *fs_path) {
     //shader compilation
     I32 compile_err;
     U32 vs, fs;
@@ -48,7 +54,7 @@ U32 create_shader_vf(Context *context, const char *vs_path, const char *fs_path)
     return program;
 }
 
-U32 create_shader_vgf(Context *context, const char *vs_path, const char *gs_path, const char *fs_path) {
+U32 create_shader_vgf(const char *vs_path, const char *gs_path, const char *fs_path) {
     //shader compilation
     I32 compile_err;
     U32 vs, fs, gs;

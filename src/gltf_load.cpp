@@ -18,6 +18,7 @@ static U64 cgltf_component_type_size(cgltf_component_type x) {
 	    return map[i].size;
     }
     assert(0 && "invalid component type");
+    return 0; // jdk: because msvc doesn't recognise assert 0 as exit
 }
 
 static GLenum gl_enum_from_cgltf_component_type(cgltf_component_type x) {
@@ -32,6 +33,7 @@ static GLenum gl_enum_from_cgltf_component_type(cgltf_component_type x) {
 	}
     }
     assert(0 && "invalid component type");
+    return 0;
 }
 
 // // @TODO(jdk): just use the one from the library
@@ -47,6 +49,7 @@ static U64 cgltf_type_component_count(cgltf_type x) {
 	}
     }
     assert(0 && "cannot get component count of invalid type");
+    return 0;
 }
 
 static GLenum cgltf_type_tex_format(cgltf_type x) {
@@ -60,6 +63,7 @@ static GLenum cgltf_type_tex_format(cgltf_type x) {
 	}
     }
     assert(0 && "cannot get pixel format for cgltf_type");
+    return 0;
 }
 
 static I32 get_attrib_location(Str8 attrib_name) {
@@ -91,25 +95,25 @@ static I32 get_morph_attrib_location(Str8 attrib_name) {
 
 // // @TODO(jdk): no handling for ./... vs ... paths
 // jdk: maybe introduce reference counting for files?
-static Str8 get_view_bin_data(Context *context, GLTFModel *model, cgltf_buffer_view *view, Str8 dir) {
-    dir = str8_dir_finish_with_slash(context->frame_arena, dir);
-    Str8 path = str8_cat(context->frame_arena, dir, str8_cstr(view->buffer->uri));
+static Str8 get_view_bin_data(GLTFModel *model, cgltf_buffer_view *view, Str8 dir) {
+    dir = str8_dir_finish_with_slash(dir, &default_temp_allocator);
+    Str8 path = str8_cat(dir, str8_cstr(view->buffer->uri), &default_temp_allocator);
     GLTFBin *entry = list_find(&model->bin_files, &bin_data_file_has_path, path);
     if(entry) {
 	return str8_substr(entry->data, view->offset, view->size);
     } else {
 	Str8 buffer_data = file_read_full_to_str8(path);
 	Str8 view_data = str8_substr(buffer_data, view->offset, view->size);
-	GLTFBin new_entry = {str8_copy(context->persistent_arena, path), buffer_data};
+	GLTFBin new_entry = {str8_copy(path), buffer_data};
 	list_push(&model->bin_files, new_entry);
 	return view_data;
     }
 }
 
-static Str8 get_anim_sampler_accessor_data(Context *context, GLTFModel *model,
+static Str8 get_anim_sampler_accessor_data(GLTFModel *model,
 	cgltf_accessor *accessor /*input or output*/, Str8 bin_dir) {
     cgltf_buffer_view *view = accessor->buffer_view;
-    Str8 view_data = get_view_bin_data(context, model, view, bin_dir);
+    Str8 view_data = get_view_bin_data(model, view, bin_dir);
     U64 offset = accessor->offset;
     U64 component_count = cgltf_type_component_count(accessor->type);
     U64 component_size = cgltf_component_type_size(accessor->component_type);
@@ -134,6 +138,7 @@ static AnimStep get_anim_step(ChannelMeta *channel_meta, U64 time_ms) {
 	}
     }
     assert(0 && "invalid animation step");
+    return {};
 }
 
 static I32 skin_joints_data_index_of_joint(SkinJointsData *skin_data, cgltf_node *joint) {
@@ -152,28 +157,28 @@ static I32 skin_joints_data_index_of_joint(SkinJointsData *skin_data, cgltf_node
 //##################################################
 // @TAG jdk: model loading functions
 
-static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFModel *model_result,
+static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 	cgltf_data *data, cgltf_node *node, Mat4 parent_world_matrix);
 
-GLTFModel *gltf_load(Context *context, GLTFLoadParams *params) {
-    GLTFModel *result = base::alloc<GLTFModel>();
+GLTFModel *gltf_load(GLTFLoadParams *params) {
+    GLTFModel *result = mem_alloc<GLTFModel>();
     cgltf_data *data = NULL;
-    Str8 file_dir = str8_dir_finish_with_slash(context->frame_arena, params->file_dir);
-    Str8 path = str8_cat(context->frame_arena, file_dir, params->file_name);
+    Str8 file_dir = str8_dir_finish_with_slash(params->file_dir, &default_temp_allocator);
+    Str8 path = str8_cat(file_dir, params->file_name, &default_temp_allocator);
     cgltf_result parse_result =
-	cgltf_parse_file(&params->options, cstr_copy_from_str8(context->frame_arena, path), &data);
+	cgltf_parse_file(&params->options, cstr_copy_from_str8(path, &default_temp_allocator), &data);
     assert(parse_result == cgltf_result_success);
     cgltf_scene *scene = data->scene;
     for(U64 inode = 0; inode < scene->nodes_count; ++inode) {
 	cgltf_node *node = scene->nodes[inode];
-	gltf_load_node_meta(context, params, result, data, node, mat4(1.f));
+	gltf_load_node_meta(params, result, data, node, mat4(1.f));
     }
     result->data = data;
     return result;
 }
 // jdk: prepare gl buffers and attributes, static transforms (fallback...),
 // skinning data, animation metadata (no actual loading of animations)
-static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFModel *model_result,
+static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 	cgltf_data *data, cgltf_node *node, Mat4 parent_world_matrix) {
     // jdk: result
     NodeMeta *node_meta = list_push(&model_result->nodes_meta);
@@ -200,18 +205,18 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 	    if(channel->target_node != node)
 		continue;
 	    if(!anim_meta) {
-		anim_meta = link_push(context->persistent_arena, &node_meta->anim_first, {str8c(anim->name)});
+		anim_meta = link_push(&node_meta->anim_first, {str8c(anim->name)});
 	    }
 	    cgltf_animation_sampler *sampler = channel->sampler;
 	    // jdk: this is ok for animations because the spec says: byteStride only for vertex attribs
 	    // => animation data shouldn't ever be interleaved
 	    // TODO(jdk): add interleaving assertion
 	    Str8 input_data =
-		get_anim_sampler_accessor_data(context, model_result, sampler->input, params->bin_dir);
+		get_anim_sampler_accessor_data(model_result, sampler->input, params->bin_dir);
 	    Str8 output_data =
-		get_anim_sampler_accessor_data(context, model_result, sampler->output, params->bin_dir);
+		get_anim_sampler_accessor_data(model_result, sampler->output, params->bin_dir);
 	    U64 num_frames = sampler->input->count;
-	    link_push(context->persistent_arena, &anim_meta->channel_first, {channel->target_path,
+	    link_push(&anim_meta->channel_first, {channel->target_path,
 		    sampler->interpolation, num_frames, input_data, output_data});
 	}
     }
@@ -225,12 +230,12 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 	    node_meta->has_skin = JK_TRUE;
 	    node_meta->skin_data = {
 		skin->joints,
-		base::alloc<Mat4>(skin->joints_count),
+		mem_alloc<Mat4>(skin->joints_count),
 		skin->joints_count
 	    };
 	    // TODO(jdk): can multiple sets of inverse bind matrices share the same buffer view??
 	    cgltf_buffer_view *ibm_view = skin->inverse_bind_matrices->buffer_view;
-	    Str8 ibm_data = get_view_bin_data(context, model_result, ibm_view, params->bin_dir);
+	    Str8 ibm_data = get_view_bin_data(model_result, ibm_view, params->bin_dir);
 	    node_meta->inverse_bind_matrices = {
 		(Mat4 *)ibm_data.start,
 		skin->inverse_bind_matrices->count
@@ -238,7 +243,7 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 	}
 	// TODO(jdk): morph targets?
 	// jdk: setup primitives meta container
-	node_meta->primitives_meta = make_stack<PrimMeta>(context->persistent_arena, mesh->primitives_count);
+	node_meta->primitives_meta = make_stack<PrimMeta>(mesh->primitives_count);
 	for(U64 iprim = 0; iprim < mesh->primitives_count; ++iprim) {
 	    cgltf_primitive *prim = &mesh->primitives[iprim];
 
@@ -246,6 +251,10 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 
 	    // jdk: material
 	    cgltf_material *material = prim->material;
+	    if(material->has_pbr_metallic_roughness) {
+		
+	    }
+
 
 	    // jdk: vertex attributes setup
 	    glGenVertexArrays(1, &prim_meta->vao);
@@ -254,14 +263,14 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 	    glGenBuffers(1, &prim_meta->ebo);
 	    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_meta->ebo);
 	    cgltf_buffer_view *indices_view = prim->indices->buffer_view;
-	    Str8 index_data = get_view_bin_data(context, model_result, indices_view, params->bin_dir);
+	    Str8 index_data = get_view_bin_data(model_result, indices_view, params->bin_dir);
 	    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_data.len, index_data.start, GL_STATIC_DRAW);
 	    prim_meta->indices_count = prim->indices->count;
 	    prim_meta->indices_type = gl_enum_from_cgltf_component_type(prim->indices->component_type);
 
 	    // jdk: group attributes of same buffer view because same glBufferSubData
 	    Stack<AttribGroup> view_attrib_groups =
-		make_stack<AttribGroup>(context->frame_arena, prim->attributes_count);
+		make_stack<AttribGroup>(prim->attributes_count);
 	    U64 full_buffer_size = 0;
 	    for(U64 iattrib = 0; iattrib < prim->attributes_count; ++iattrib) {
 		cgltf_buffer_view *current_view = prim->attributes[iattrib].data->buffer_view;
@@ -270,7 +279,7 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 		if(current_view != last_view) {
 		    U64 num_left_over = prim->attributes_count - iattrib;
 		    attrib_group = stack_push<AttribGroup>(&view_attrib_groups,
-			    make_stack<cgltf_attribute *>(context->frame_arena, num_left_over));
+			    make_stack<cgltf_attribute *>(num_left_over));
 		    last_view = current_view;
 		    full_buffer_size += current_view->size;
 		}
@@ -287,7 +296,7 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 		if(group->len <= 0)
 		    break;
 		cgltf_buffer_view *view = group->buf[0]->data->buffer_view;
-		Str8 attrib_data = get_view_bin_data(context, model_result, view, params->bin_dir);
+		Str8 attrib_data = get_view_bin_data(model_result, view, params->bin_dir);
 		glBufferSubData(GL_ARRAY_BUFFER, sub_data_offset, view->size,
 			(const void *)attrib_data.start);
 		for(U64 iattrib = 0; iattrib < group->len; ++iattrib) {
@@ -327,7 +336,7 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 			    "morph target attribs have stride greater than element size\n"
 			    "=> interleaved, not supported");
 		    Str8 mt_attrib_data =
-			get_view_bin_data(context, model_result, mt_attrib_view, params->bin_dir);
+			get_view_bin_data(model_result, mt_attrib_view, params->bin_dir);
 		    U64 offset = mt_attrib_accessor->offset;
 		    U64 index = get_morph_attrib_location(str8c(mt_attrib->name));
 		    U64 count = mt_attrib_accessor->count;
@@ -350,7 +359,7 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
     }
     for(U64 ichild = 0; ichild < node->children_count; ++ichild) {
 	cgltf_node *child = node->children[ichild];
-	gltf_load_node_meta(context, params, model_result, data, child, world_matrix);
+	gltf_load_node_meta(params, model_result, data, child, world_matrix);
     }
 }
 
@@ -358,17 +367,17 @@ static void gltf_load_node_meta(Context *context, GLTFLoadParams *params, GLTFMo
 //##################################################
 // @TAG jdk: apply animated node transforms to model
 
-static void gltf_apply_node_animations(Context *context, GLTFModel *model, cgltf_node *node, Mat4 parent_world_matrix);
+static void gltf_apply_node_animations(GLTFModel *model, cgltf_node *node, Mat4 parent_world_matrix);
 static void gltf_apply_joints(GLTFModel *model, cgltf_node *node);
 
-void gltf_animate(Context *context, GLTFModel *model) {
+void gltf_animate(GLTFModel *model) {
     cgltf_scene *scene = model->data->scene;
     Slice<cgltf_node *> nodes = make_slice(scene->nodes, scene->nodes_count);
-    JK_SliceForeach(&nodes, node, { gltf_apply_node_animations(context, model, *node, mat4(1.f)); });
+    JK_SliceForeach(&nodes, node, { gltf_apply_node_animations(model, *node, mat4(1.f)); });
     JK_SliceForeach(&nodes, node, { gltf_apply_joints(model, *node); });
 }
 
-static void gltf_apply_node_animations(Context *context, GLTFModel *model, cgltf_node *node,
+static void gltf_apply_node_animations(GLTFModel *model, cgltf_node *node,
 	Mat4 parent_world_matrix) {
     NodeMeta *node_meta = list_find(&model->nodes_meta, match_node, node);
     assert(node_meta);
@@ -431,7 +440,7 @@ static void gltf_apply_node_animations(Context *context, GLTFModel *model, cgltf
 	    F32 *fbuffer = (F32 *)weights_meta->output.start;
 	    F32 *w0 = &fbuffer[step.i0 * num_weights];
 	    F32 *w1 = &fbuffer[step.i1 * num_weights];
-	    F32 *w_res = lerp(context->frame_arena, w0, w1, num_weights, step.interpolation_factor);
+	    F32 *w_res = lerp(w0, w1, num_weights, step.interpolation_factor, &default_temp_allocator);
 	    node_meta->morph_weights = make_slice<F32>(w_res, num_weights);
 	} else {
 	    node_meta->morph_weights = make_slice<F32>(NULL, 0);
@@ -448,7 +457,7 @@ static void gltf_apply_node_animations(Context *context, GLTFModel *model, cgltf
 
     for(U64 ichild = 0; ichild < node->children_count; ++ichild) {
 	cgltf_node *child = node->children[ichild];
-	gltf_apply_node_animations(context, model, child, world_matrix);
+	gltf_apply_node_animations(model, child, world_matrix);
     }
 }
 
@@ -533,10 +542,10 @@ static void gltf_draw_node(GLTFModel *model, cgltf_node *node) {
 	    for(U64 imorph_attrib = 0; imorph_attrib < JK_NUM_MORPH_ATTRIBS; ++imorph_attrib) {
 		if(info->morph_attribute_textures[imorph_attrib] != 0) {
 		    Arena arena = make_arena(1024); // @TODO(jdk): get rid of this
-		    Str8 index_str = str8_from_i64(&arena, imorph_attrib);
-		    Str8 loc_str = str8_cat(&arena, str8c("morph_texture"), index_str);
+		    Str8 index_str = str8_from_i64(imorph_attrib, &default_temp_allocator);
+		    Str8 loc_str = str8_cat(str8c("morph_texture"), index_str, &default_temp_allocator);
 		    U32 location = glGetUniformLocation(model->draw.program,
-			    cstr_copy_from_str8(&arena, loc_str));
+			    cstr_copy_from_str8(loc_str, &default_temp_allocator));
 
 		    glUniform1i(location, imorph_attrib);
 		    glActiveTexture(GL_TEXTURE0 + imorph_attrib);

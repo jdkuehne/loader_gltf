@@ -4,7 +4,6 @@
 #include "base/core.hpp"
 #include "base/str.hpp"
 #include "base/vec.hpp"
-#include "base/context.hpp"
 
 #include "shader.hpp"
 
@@ -27,8 +26,9 @@ typedef struct TextShaderInfo {
     U32 location_font_scale;
 } TextShaderInfo;
 
-TextObject *new_text_object(Context *context, Str8 text);
-void draw_textbox_no_background(Context *context, const TextObject *text,
+TextObject *new_text_object(Str8 text);
+void delete_text_object(TextObject *obj);
+void draw_textbox_no_background(const TextObject *text,
 				Vec3 color, F32 font_scale,
 				U64 offset_x, U64 offset_y,
 				U64 window_width, U64 window_height);

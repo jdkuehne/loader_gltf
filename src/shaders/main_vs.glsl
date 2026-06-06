@@ -3,6 +3,7 @@
 layout (location = 0) in vec3 attrib_pos;
 layout (location = 1) in vec3 attrib_norm;
 layout (location = 2) in vec3 attrib_tangent;
+layout (location = 3) in vec2 attrib_texcoord0;
 // tangent
 // tex coords
 layout (location = 7) in uvec4 attrib_joints;
@@ -27,8 +28,6 @@ uniform mat4 proj;
 uniform bool has_skin;
 uniform mat4 joint_matrices[64];
 
-// uniform int num_morph_targets;
-
 uniform sampler2D morph_texture0; // jdk: position
 uniform sampler2D morph_texture1; // jdk: normals
 uniform sampler2D morph_texture2; // jdk: tangents
@@ -41,6 +40,7 @@ uniform float morph_weights[64];
 
 out vec3 frag_pos;
 out vec3 frag_norm;
+out vec2 frag_texcoord;
 
 void main() {
     mat4 skin_mat =
@@ -64,5 +64,6 @@ void main() {
 
     frag_norm = normalize(transpose(inverse(mat3(animated_world))) * norm);
     frag_pos = vec3(animated_world * vec4(pos, 1.0));
+    frag_texcoord = attrib_texcoord0;
     gl_Position = proj * view * animated_world * vec4(pos, 1.0);
 }

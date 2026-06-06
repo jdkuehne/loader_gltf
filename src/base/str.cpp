@@ -1,7 +1,8 @@
 #include "str.hpp"
 
-namespace base
-{
+#include <string.h>
+#include <stdio.h>
+#include <math.h>
 
 //##################################################
 // jdk: char characterisation
@@ -37,29 +38,12 @@ B8 char_is_bslash(U8 c) {
 
 //##################################################
 // jdk: string functions
-Str8 str8(U8 *start, U64 len) {
-    Str8 result = {start, len};
-    return result;
-}
-
-Str8 str8_cstr(const char *cstr) {
-    return str8((U8 *)cstr, strlen(cstr));
-}
-
-Str8 str8c(const char *cstr) {
-    return str8_cstr(cstr);
-}
-
-Str8 str8_range(U8 *first, U8 *one_past_last) {
-    return str8(first, (U64)(one_past_last - first));
-}
-
 Str8 str8_alloc_buffer(U64 len, Allocator *allocator) {
-    return str8(alloc(len, allocator), len);
+    return str8(mem_alloc(len, allocator), len);
 }
 
-char *cstr_alloc_buffer(Arena *arena, U64 len) {
-    return arena_alloc<char>(arena, len + 1);
+char *cstr_alloc_buffer(U64 len, Allocator *allocator) {
+    return mem_alloc<char>(len + 1, allocator);
 }
 
 U8 *str8_first(Str8 str) {
@@ -108,6 +92,14 @@ U8 *str8_one_past_last_not_of_space(Str8 str) {
     }
     return NULL;
 }
+U8 *str8_first_of_space(Str8 str) {
+    for(U8 *it = str8_first(str); it != str8_one_past_last(str); ++it) {
+	if(char_is_space(*it)) {
+	    return it;
+	}
+    }
+    return NULL;
+}
 
 U8 str8_equal(Str8 lhs, Str8 rhs) {
     if(lhs.len != rhs.len) {
@@ -137,41 +129,37 @@ Str8 str8_substr(Str8 str, U64 offset, U64 len) {
     return str8(str.start + offset, len);
 }
 
-Str8 str8_copy(Arena *arena, Str8 str) {
-    Str8 result = str8_alloc_buffer(arena, str.len);
+Str8 str8_copy(Str8 str, Allocator *allocator) {
+    Str8 result = str8_alloc_buffer(str.len, allocator);
     memcpy(result.start, str.start, str.len);
     return result;
 }
 
-Str8 str8_copy_cstr(Arena *arena, char *cstr) {
-    return str8_copy(arena, str8_cstr(cstr));
-}
-
-char *cstr_copy_from_str8(Arena *arena, Str8 str) {
-    char *cstr = cstr_alloc_buffer(arena, str.len);
+char *cstr_copy_from_str8(Str8 str, Allocator *allocator) {
+    char *cstr = cstr_alloc_buffer(str.len, allocator);
     memcpy(cstr, str.start, str.len);
     cstr[str.len] = 0;
     return cstr;
 }
 
-Str8 str8_cat(Arena *arena, Str8 str1, Str8 str2) {
-    Str8 result = str8_alloc_buffer(arena, str1.len + str2.len);
+Str8 str8_cat(Str8 str1, Str8 str2, Allocator *allocator) {
+    Str8 result = str8_alloc_buffer(str1.len + str2.len, allocator);
     memcpy(result.start, str1.start, str1.len);
     memcpy(result.start + str1.len, str2.start, str2.len);
     return result;
 }
 
-Str8 str8_cat_cstrs(Arena *arena, char *cstr1, char *cstr2) {
-    return str8_cat(arena, str8_cstr(cstr1), str8_cstr(cstr2));
+Str8 str8_cat_cstrs(char *cstr1, char *cstr2, Allocator *allocator) {
+    return str8_cat(str8c(cstr1), str8c(cstr2), allocator);
 }
 
-Str8 str8_dir_finish_with_slash(Arena *arena, Str8 dir) {
+Str8 str8_dir_finish_with_slash(Str8 dir, Allocator *allocator) {
     Str8 trimmed = str8_trim(dir);
     U8 last = str8_last_char(trimmed);
     if(char_is_slash(last)) {
 	return trimmed;
     } else {
-	return str8_cat(arena, trimmed, str8_cstr("/"));
+	return str8_cat(trimmed, str8_cstr("/"), allocator);
     }
 }
 
@@ -185,14 +173,14 @@ static U64 uint_get_num_digits(U64 x) {
     return result;
 }
 
-Str8 str8_from_i64(Arena *arena, I64 x) {
+Str8 str8_from_i64(I64 x, Allocator *allocator) {
     // jdk: figured this shit out myself let's goo
     B8 is_negative = x < 0;
     U64 x_abs = is_negative ? (U64)(-x) : (U64)x;
     U64 num_digits = uint_get_num_digits(x_abs);
     // printf("%d\n", num_digits);
 
-    Str8 str = str8_alloc_buffer(arena, num_digits + (is_negative ? 1 : 0));
+    Str8 str = str8_alloc_buffer(num_digits + (is_negative ? 1 : 0), allocator);
     
     U64 processed = 0;
     U64 digit = 0;
@@ -213,16 +201,16 @@ Str8 str8_from_i64(Arena *arena, I64 x) {
 }
 
 // jdk: adds thousands separators
-Str8 str8_from_i64_pretty(Arena *arena, I64 x) {
+Str8 str8_from_i64_pretty(I64 x, Allocator *allocator) {
     // jdk: figured this shit out myself let's goo
     B8 is_negative = x < 0;
     U64 x_abs = is_negative ? (U64)(-x) : (U64)x;
     U64 num_digits = uint_get_num_digits(x_abs);
 
     U64 num_thousands = (num_digits - 1) / 3;
-    printf("num_thousands: %lu\n", num_thousands);
+    printf("num_thousands: %llu\n", num_thousands);
 
-    Str8 str = str8_alloc_buffer(arena, num_digits + (is_negative ? 1 : 0) + num_thousands);
+    Str8 str = str8_alloc_buffer(num_digits + (is_negative ? 1 : 0) + num_thousands, allocator);
     
     U64 processed = 0;
     U64 digit = 0;
@@ -325,5 +313,3 @@ void putln_str8(Str8 str) {
     }
     putchar('\n');
 }
-
-} // namespace base

@@ -3,7 +3,7 @@
 
 #include "../core.hpp"
 #include "../str.hpp"
-#include "../allocator.hpp"
+#include "../mem/allocator.hpp"
 
 #if JK_OS_LINUX
 # include "file_types_linux.hpp"
@@ -12,9 +12,6 @@
 #else
 # error "no defined file api for this OS"
 #endif
-
-namespace base
-{
 
 B8 file_exists(Str8 path, Allocator *temp_allocator = &default_temp_allocator);
 FileDescriptor file_open(Str8 path, FileAccessFlag access_flag, FileCreateFlag create_flag,
@@ -25,7 +22,5 @@ U64 file_read(FileDescriptor fd, void *buffer, U64 count);
 Str8 file_read_full_to_str8(Str8 path, Allocator *file_allocator = &default_allocator,
 	Allocator *temp_allocator = &default_temp_allocator);
 void file_close(FileDescriptor fd);
-
-}
 
 #endif

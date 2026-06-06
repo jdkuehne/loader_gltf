@@ -10,9 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 
-namespace base
-{
-
 typedef struct Mat4F32 {
     F32 v[4][4];
 } Mat4F32;
@@ -45,7 +42,5 @@ Mat4  make_mat4_transform   (Vec3 translation, Quat rotation, Vec3 scale);
 Mat4  make_mat4_transform   (Transform t);
 
 void mat4_print(Mat4 m);
-
-} /*namespace base*/
 
 #endif // MAT_H

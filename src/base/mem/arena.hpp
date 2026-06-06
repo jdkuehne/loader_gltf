@@ -1,10 +1,7 @@
 #ifndef ARENA_H
 #define ARENA_H
 
-#include "core.hpp"
-
-namespace base::mem
-{
+#include "../core.hpp"
 
 enum class BackingBufferType {
     HeapAlloc,
@@ -46,7 +43,5 @@ void arena_reset(Arena *arena);
 void destroy_arena(Arena *arena);
 ArenaSavepoint arena_make_savepoint(Arena *arena);
 void arena_savepoint_reset(ArenaSavepoint *savepoint);
-
-} /*namespace base::mem*/
 
 #endif

@@ -5,9 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-namespace base::mem
-{
-
 Arena make_arena(U64 size) {
     Arena result = {0};
     result.memory = malloc(size);
@@ -46,8 +43,6 @@ U8 *arena_alloc(Arena *arena, U64 size, U64 alignment) {
     assert(aligned_offset + size <= arena->size);
     U8 *result = (U8 *)arena->memory + aligned_offset;
     arena->offset = aligned_offset + size;
-    // jdk: zero memory
-    memset(result, 0, size);
     return result;
 }
 
@@ -79,5 +74,3 @@ void arena_savepoint_reset(ArenaSavepoint *savepoint) {
     savepoint->arena->offset = savepoint->offset;
     memset(savepoint, 0, sizeof(*savepoint));
 }
-
-} /*namespace base::mem*/

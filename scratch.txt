@@ -1,0 +1,208 @@
+
+
+    Directory: C:\Users\jdkue\Code\Projects\loader_gltf
+
+
+Mode                 LastWriteTime         Length Name                                                                                                                                                         
+----                 -------------         ------ ----                                                                                                                                                         
+d-----          6/2/2026   7:13 PM                obj                                                                                                                                                          
+
+
+    Directory: C:\Users\jdkue\Code\Projects\loader_gltf\obj
+
+
+Mode                 LastWriteTime         Length Name                                                                                                                                                         
+----                 -------------         ------ ----                                                                                                                                                         
+d-----          6/2/2026   7:13 PM                base                                                                                                                                                         
+main.cpp
+../src/main.cpp(164): error C2664: 'void arena_reset(Arena *)': cannot convert argument 1 from 'Arena' to 'Arena *'
+../src/main.cpp(164): note: No user-defined-conversion operator available that can perform this conversion, or the operator cannot be called
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base\mem\arena.hpp(42): note: see declaration of 'arena_reset'
+../src/main.cpp(164): note: while trying to match the argument list '(Arena)'
+str.cpp
+../src/base/str.cpp(40): error C3861: 'alloc': identifier not found
+../src/base/str.cpp(44): error C3861: 'alloc': identifier not found
+../src/base/str.cpp(124): error C3861: 'memcpy': identifier not found
+../src/base/str.cpp(130): error C3861: 'memcpy': identifier not found
+../src/base/str.cpp(137): error C3861: 'memcpy': identifier not found
+../src/base/str.cpp(138): error C3861: 'memcpy': identifier not found
+../src/base/str.cpp(201): error C3861: 'printf': identifier not found
+../src/base/str.cpp(296): error C3861: 'putchar': identifier not found
+../src/base/str.cpp(302): error C3861: 'putchar': identifier not found
+../src/base/str.cpp(304): error C3861: 'putchar': identifier not found
+file_win32.cpp
+../src/base/os/file_win32.cpp(13): error C2664: 'HANDLE CreateFileA(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE)': cannot convert argument 2 from 'base::os::FileAccessFlag' to 'DWORD'
+../src/base/os/file_win32.cpp(13): note: This conversion requires an explicit cast (static_cast, C-style cast or parenthesized function-style cast)
+C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\fileapi.h(80): note: see declaration of 'CreateFileA'
+../src/base/os/file_win32.cpp(13): note: while trying to match the argument list '(char *, base::os::FileAccessFlag, int, int, base::os::FileCreateFlag, int, int)'
+../src/base/os/file_win32.cpp(16): error C3861: 'printf': identifier not found
+../src/base/os/file_win32.cpp(27): error C2819: type '_BY_HANDLE_FILE_INFORMATION' does not have an overloaded member 'operator ->'
+C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\fileapi.h(641): note: see declaration of '_BY_HANDLE_FILE_INFORMATION'
+../src/base/os/file_win32.cpp(27): note: did you intend to use '.' instead?
+../src/base/os/file_win32.cpp(27): error C2232: '->_BY_HANDLE_FILE_INFORMATION::nFileSizeLow': left operand has 'struct' type, use '.'
+../src/base/os/file_win32.cpp(27): error C2819: type '_BY_HANDLE_FILE_INFORMATION' does not have an overloaded member 'operator ->'
+C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\fileapi.h(641): note: see declaration of '_BY_HANDLE_FILE_INFORMATION'
+../src/base/os/file_win32.cpp(27): note: did you intend to use '.' instead?
+../src/base/os/file_win32.cpp(27): error C2232: '->_BY_HANDLE_FILE_INFORMATION::nFileSizeHigh': left operand has 'struct' type, use '.'
+../src/base/os/file_win32.cpp(27): error C2660: 'compose_uint': function does not take 1 arguments
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base\os\../core.hpp(40): note: see declaration of 'compose_uint'
+../src/base/os/file_win32.cpp(27): note: while trying to match the argument list '()'
+../src/base/os/file_win32.cpp(32): error C2664: 'base::os::FileDescriptor base::os::file_open(Str8,base::os::FileAccessFlag,base::os::FileCreateFlag,Allocator *)': cannot convert argument 1 from 'char *' to 'Str8'
+../src/base/os/file_win32.cpp(32): note: 'Str8::Str8': no overloaded function could convert all the argument types
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base\os\../str.hpp(10): note: could be 'Str8::Str8(Str8 &&)'
+../src/base/os/file_win32.cpp(32): note: 'Str8::Str8(Str8 &&)': cannot convert argument 1 from 'char *' to 'Str8 &&'
+../src/base/os/file_win32.cpp(32): note: Reason: cannot convert from 'char *' to 'Str8'
+../src/base/os/file_win32.cpp(32): note: Conversion requires a second user-defined-conversion operator or constructor
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base\os\../str.hpp(10): note: or       'Str8::Str8(const Str8 &)'
+../src/base/os/file_win32.cpp(32): note: 'Str8::Str8(const Str8 &)': cannot convert argument 1 from 'char *' to 'const Str8 &'
+../src/base/os/file_win32.cpp(32): note: Reason: cannot convert from 'char *' to 'const Str8'
+../src/base/os/file_win32.cpp(32): note: Conversion requires a second user-defined-conversion operator or constructor
+../src/base/os/file_win32.cpp(32): note: while trying to match the argument list '(char *)'
+../src/base/os/file_win32.cpp(10): note: see declaration of 'base::os::file_open'
+../src/base/os/file_win32.cpp(32): note: while trying to match the argument list '(char *, base::os::FileAccessFlag, base::os::FileCreateFlag, Allocator *)'
+../src/base/os/file_win32.cpp(38): error C2819: type '_BY_HANDLE_FILE_INFORMATION' does not have an overloaded member 'operator ->'
+C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\fileapi.h(641): note: see declaration of '_BY_HANDLE_FILE_INFORMATION'
+../src/base/os/file_win32.cpp(38): note: did you intend to use '.' instead?
+../src/base/os/file_win32.cpp(38): error C2232: '->_BY_HANDLE_FILE_INFORMATION::nFileSizeLow': left operand has 'struct' type, use '.'
+../src/base/os/file_win32.cpp(38): error C2819: type '_BY_HANDLE_FILE_INFORMATION' does not have an overloaded member 'operator ->'
+C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\fileapi.h(641): note: see declaration of '_BY_HANDLE_FILE_INFORMATION'
+../src/base/os/file_win32.cpp(38): note: did you intend to use '.' instead?
+../src/base/os/file_win32.cpp(38): error C2232: '->_BY_HANDLE_FILE_INFORMATION::nFileSizeHigh': left operand has 'struct' type, use '.'
+../src/base/os/file_win32.cpp(38): error C2660: 'compose_uint': function does not take 1 arguments
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base\os\../core.hpp(40): note: see declaration of 'compose_uint'
+../src/base/os/file_win32.cpp(38): note: while trying to match the argument list '()'
+../src/base/os/file_win32.cpp(46): error C3861: 'printf': identifier not found
+../src/base/os/file_win32.cpp(50): error C2664: 'BOOL ReadFile(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED)': cannot convert argument 4 from 'I64 *' to 'LPDWORD'
+../src/base/os/file_win32.cpp(50): note: Types pointed to are unrelated; conversion requires reinterpret_cast, C-style cast or parenthesized function-style cast
+C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\fileapi.h(993): note: see declaration of 'ReadFile'
+../src/base/os/file_win32.cpp(50): note: while trying to match the argument list '(base::os::FileDescriptor, void *, U64, I64 *, int)'
+vec.cpp
+../src/base/vec.cpp(106): error C3861: 'alloc': identifier not found
+quat.cpp
+mat.cpp
+arena.cpp
+c1xx: fatal error C1083: Cannot open source file: '../src/base/arena.cpp': No such file or directory
+window.cpp
+shader.cpp
+../src/shader.cpp(9): error C2039: 'str8c': is not a member of 'base'
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/os/file.hpp(16): note: see declaration of 'base'
+../src/shader.cpp(9): error C3861: 'file_read_full_to_str8': identifier not found
+../src/shader.cpp(12): error C2065: 'file_size': undeclared identifier
+../src/shader.cpp(13): error C2664: 'void free(void *)': cannot convert argument 1 from 'Str8' to 'void *'
+../src/shader.cpp(13): note: No user-defined-conversion operator available that can perform this conversion, or the operator cannot be called
+C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\ucrt\corecrt_malloc.h(89): note: see declaration of 'free'
+../src/shader.cpp(13): note: while trying to match the argument list '(Str8)'
+gltf_load.cpp
+../src/gltf_load.cpp(95): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(96): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(101): error C3861: 'file_read_full_to_str8': identifier not found
+../src/gltf_load.cpp(103): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(112): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(159): error C3861: 'alloc': identifier not found
+../src/gltf_load.cpp(161): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(162): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(164): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(164): error C2660: 'cgltf_parse_file': function does not take 2 arguments
+C:\Users\jdkue\Code\Projects\loader_gltf\src\ext/cgltf.h(852): note: see declaration of 'cgltf_parse_file'
+../src/gltf_load.cpp(164): note: while trying to match the argument list '(cgltf_options *, cgltf_data **)'
+../src/gltf_load.cpp(169): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(203): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(203): error C2672: 'link_push': no matching overloaded function found
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/containers.hpp(136): note: could be 'T *link_push(Link<T> **,T,Allocator *)'
+../src/gltf_load.cpp(210): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(212): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(214): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(214): error C2672: 'link_push': no matching overloaded function found
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/containers.hpp(136): note: could be 'T *link_push(Link<T> **,T,Allocator *)'
+../src/gltf_load.cpp(228): error C3861: 'alloc': identifier not found
+../src/gltf_load.cpp(233): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(241): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(241): error C2672: 'make_stack': no matching overloaded function found
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/containers.hpp(31): note: could be 'Stack<T> make_stack(U64,Allocator *)'
+../src/gltf_load.cpp(241): note: 'initializing': cannot convert from 'cgltf_size' to 'Allocator *'
+../src/gltf_load.cpp(241): note: Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or parenthesized function-style cast
+../src/gltf_load.cpp(257): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(264): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(264): error C2672: 'make_stack': no matching overloaded function found
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/containers.hpp(31): note: could be 'Stack<T> make_stack(U64,Allocator *)'
+../src/gltf_load.cpp(264): note: 'initializing': cannot convert from 'cgltf_size' to 'Allocator *'
+../src/gltf_load.cpp(264): note: Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or parenthesized function-style cast
+../src/gltf_load.cpp(273): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(273): error C2672: 'make_stack': no matching overloaded function found
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/containers.hpp(31): note: could be 'Stack<T> make_stack(U64,Allocator *)'
+../src/gltf_load.cpp(273): note: 'initializing': cannot convert from 'U64' to 'Allocator *'
+../src/gltf_load.cpp(273): note: Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or parenthesized function-style cast
+../src/gltf_load.cpp(272): error C2672: 'stack_push': no matching overloaded function found
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/containers.hpp(36): note: could be 'T *stack_push(Stack<T> *,T)'
+../src/gltf_load.cpp(272): note: 'T *stack_push(Stack<T> *,T)': expects 2 arguments - 1 provided
+../src/gltf_load.cpp(290): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(330): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(353): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(367): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(434): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(451): error C2065: 'context': undeclared identifier
+../src/gltf_load.cpp(536): error C2664: 'Str8 str8_from_i64(I64,Allocator *)': cannot convert argument 1 from 'Arena *' to 'I64'
+../src/gltf_load.cpp(536): note: There is no context in which this conversion is possible
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/str.hpp(55): note: see declaration of 'str8_from_i64'
+../src/gltf_load.cpp(536): note: while trying to match the argument list '(Arena *, U64)'
+../src/gltf_load.cpp(537): error C2664: 'Str8 str8_cat(Str8,Str8,Allocator *)': cannot convert argument 1 from 'Arena *' to 'Str8'
+../src/gltf_load.cpp(537): note: 'Str8::Str8': no overloaded function could convert all the argument types
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/str.hpp(10): note: could be 'Str8::Str8(Str8 &&)'
+../src/gltf_load.cpp(537): note: 'Str8::Str8(Str8 &&)': cannot convert argument 1 from 'Arena *' to 'Str8 &&'
+../src/gltf_load.cpp(537): note: Reason: cannot convert from 'Arena *' to 'Str8'
+../src/gltf_load.cpp(537): note: Conversion requires a second user-defined-conversion operator or constructor
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/str.hpp(10): note: or       'Str8::Str8(const Str8 &)'
+../src/gltf_load.cpp(537): note: 'Str8::Str8(const Str8 &)': cannot convert argument 1 from 'Arena *' to 'const Str8 &'
+../src/gltf_load.cpp(537): note: Reason: cannot convert from 'Arena *' to 'const Str8'
+../src/gltf_load.cpp(537): note: Conversion requires a second user-defined-conversion operator or constructor
+../src/gltf_load.cpp(537): note: while trying to match the argument list '(Arena *)'
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/str.hpp(50): note: see declaration of 'str8_cat'
+../src/gltf_load.cpp(537): note: while trying to match the argument list '(Arena *, Str8, Str8)'
+../src/gltf_load.cpp(539): error C2664: 'char *cstr_copy_from_str8(Str8,Allocator *)': cannot convert argument 1 from 'Arena *' to 'Str8'
+../src/gltf_load.cpp(539): note: 'Str8::Str8': no overloaded function could convert all the argument types
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/str.hpp(10): note: could be 'Str8::Str8(Str8 &&)'
+../src/gltf_load.cpp(539): note: 'Str8::Str8(Str8 &&)': cannot convert argument 1 from 'Arena *' to 'Str8 &&'
+../src/gltf_load.cpp(539): note: Reason: cannot convert from 'Arena *' to 'Str8'
+../src/gltf_load.cpp(539): note: Conversion requires a second user-defined-conversion operator or constructor
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/str.hpp(10): note: or       'Str8::Str8(const Str8 &)'
+../src/gltf_load.cpp(539): note: 'Str8::Str8(const Str8 &)': cannot convert argument 1 from 'Arena *' to 'const Str8 &'
+../src/gltf_load.cpp(539): note: Reason: cannot convert from 'Arena *' to 'const Str8'
+../src/gltf_load.cpp(539): note: Conversion requires a second user-defined-conversion operator or constructor
+../src/gltf_load.cpp(539): note: while trying to match the argument list '(Arena *)'
+C:\Users\jdkue\Code\Projects\loader_gltf\src\base/str.hpp(48): note: see declaration of 'cstr_copy_from_str8'
+../src/gltf_load.cpp(539): note: while trying to match the argument list '(Arena *, Str8)'
+ui.cpp
+../src/ui.cpp(6): error C2365: 'new_text_object': redefinition; previous definition was 'function'
+C:\Users\jdkue\Code\Projects\loader_gltf\src\ui.hpp(29): note: see declaration of 'new_text_object'
+../src/ui.cpp(6): error C2065: 'Context': undeclared identifier
+../src/ui.cpp(6): error C2065: 'context': undeclared identifier
+../src/ui.cpp(6): error C2275: 'Str8': expected an expression instead of a type
+../src/ui.cpp(6): error C2146: syntax error: missing ')' before identifier 'text'
+../src/ui.cpp(6): error C2143: syntax error: missing ';' before '{'
+../src/ui.cpp(6): error C2447: '{': missing function header (old-style formal list?)
+../src/ui.cpp(62): error C2182: 'draw_textbox_no_background': this use of 'void' is not valid
+../src/ui.cpp(62): error C2365: 'draw_textbox_no_background': redefinition; previous definition was 'function'
+C:\Users\jdkue\Code\Projects\loader_gltf\src\ui.hpp(30): note: see declaration of 'draw_textbox_no_background'
+../src/ui.cpp(62): error C2065: 'Context': undeclared identifier
+../src/ui.cpp(62): error C2065: 'context': undeclared identifier
+../src/ui.cpp(62): error C2059: syntax error: 'const'
+../src/ui.cpp(65): error C2143: syntax error: missing ';' before '{'
+../src/ui.cpp(65): error C2447: '{': missing function header (old-style formal list?)
+Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36246 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+cl : Command line warning D9024 : unrecognized source file type 'obj/main.o obj/window.o obj/shader.o obj/gltf_load.o obj/ui.o\
+
+    obj/base/core.o obj/base/str.o obj/base/file.o obj/base/vec.o obj/base/quat.o\
+
+    obj/base/mat.o obj/base/arena.o', object file assumed
+Microsoft (R) Incremental Linker Version 14.51.36246.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:loader.exe 
+obj/main.o obj/window.o obj/shader.o obj/gltf_load.o obj/ui.o\ 
+obj/base/core.o obj/base/str.o obj/base/file.o obj/base/vec.o obj/base/quat.o\ 
+obj/base/mat.o obj/base/arena.o 
+LINK : fatal error LNK1181: cannot open input file 'obj\main.o obj\window.o obj\shader.o obj\gltf_load.o obj\ui.o\.obj'
+
+

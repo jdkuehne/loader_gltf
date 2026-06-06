@@ -2,11 +2,8 @@
 #define VEC_H
 
 #include "core.hpp"
-#include "arena.hpp"
+#include "mem/allocator.hpp"
 #include <math.h>
-
-namespace base
-{
 
 typedef union Vec2F32 {
     struct {
@@ -52,8 +49,6 @@ Vec3 vec3_scale_default();
 
 Vec2 vec2           (F32 x, F32 y);
 
-F32 *lerp(Arena *arena, F32 *a, F32 *b, U64 count, F32 f);
-
-} /*namespace base*/
+F32 *lerp(F32 *a, F32 *b, U64 count, F32 f, Allocator *allocator);
 
 #endif // VEC_H

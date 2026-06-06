@@ -28,8 +28,8 @@ struct Stack {
 };
 
 template <typename T>
-Stack<T> make_stack(Arena *arena, U64 cap) {
-    return {arena_alloc<T>(arena, cap), 0, cap};
+Stack<T> make_stack(U64 cap, Allocator *allocator = &default_allocator) {
+    return {mem_alloc<T>(cap, allocator), 0, cap};
 }
 
 template <typename T>
@@ -133,15 +133,15 @@ struct Link {
 };
 
 template <typename T>
-T *link_push(Arena *arena, Link<T> **first, T val) {
+T *link_push(Link<T> **first, T val, Allocator *allocator = &default_allocator) {
     if(*first == NULL) {
-	*first = arena_alloc<Link<T>>(arena);
+	*first = mem_alloc<Link<T>>(allocator);
 	(*first)->next = *first;
 	(*first)->prev = *first;
 	(*first)->val = val;
 	return &(*first)->val;
     } else {
-	Link<T> *new_elem = arena_alloc<Link<T>>(arena);
+	Link<T> *new_elem = mem_alloc<Link<T>>(allocator);
 	new_elem->prev = (*first)->prev;
 	new_elem->next = *first;
 	new_elem->val = val;
@@ -178,6 +178,5 @@ T *link_find(Link<T> *first, B8 (*fn_condition)(T *, ArgT), ArgT arg) {
 	current_link = current_link->next;\
     } while(current_link != (first));\
 } while(0)
-
 
 #endif
