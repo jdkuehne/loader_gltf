@@ -74,43 +74,45 @@ GLFWwindow *window_setup() {
     return window;
 }
 
-/*
-void handle_input(GLFWwindow *window, Camera *camera, float delta_time) {
-    float move_len = delta_time * CAM_MOVE_SPEED;
-    float cam_angle_change = delta_time * CAM_ROTATE_SPEED;
+void input(GLFWwindow *window, WindowInput *input) {
+    B8 w = key_pressed(window, GLFW_KEY_W);
+    B8 a = key_pressed(window, GLFW_KEY_A);
+    B8 s = key_pressed(window, GLFW_KEY_S);
+    B8 d = key_pressed(window, GLFW_KEY_D);
+    input->axis_h = (F32)(d - a);
+    input->axis_v = (F32)(w - s);
+    input->wasd = vec2(input->axis_h, input->axis_v);
+    input->wasd_n = vec2_normalize(input->wasd);
+    B8 e = key_pressed(window, GLFW_KEY_E);
+    B8 q = key_pressed(window, GLFW_KEY_Q);
+    input->axis_x = input->axis_h;
+    input->axis_y = (F32)(e - q);
+    input->axis_z = input->axis_v;
+    input->sphere = vec3_normalize(vec3(input->axis_x, input->axis_y, input->axis_z));
+    
+    constexpr float cam_speed = 2.f;
+    const float cam_move = delta_time * cam_speed;
+    if(key_pressed(window, GLFW_KEY_D))
+	camera_move(&camera, vec3_scale(vec3_cross(camera.dir, camera_up), cam_move));
+    if(key_pressed(window, GLFW_KEY_A))
+	camera_move(&camera, vec3_scale(vec3_cross(camera.dir, camera_up), -cam_move));
 
-    //movement
-    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-	camera->pos += camera->front * move_len;
-    }
-    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-	camera->pos -= glm::normalize(glm::cross(camera->front, camera->up)) * move_len;
-    }
-    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-	camera->pos -= camera->front * move_len;
-    }
-    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-	camera->pos += glm::normalize(glm::cross(camera->front, camera->up)) * move_len;
-    }
-    if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-	camera->pos.y += move_len;
-    }
-    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-	camera->pos.y -= move_len;
-    }
+    if(key_pressed(window, GLFW_KEY_W))
+	camera_move(&camera, vec3_scale(camera.dir, cam_move));
+    if(key_pressed(window, GLFW_KEY_S))
+	camera_move(&camera, vec3_scale(camera.dir, -cam_move));
 
-    //camera angle
-    if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-	pan_camera_deg(camera, cam_angle_change);
-    }
-    if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-	pan_camera_deg(camera, -cam_angle_change);
-    }
-    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-	tilt_camera_deg(camera, cam_angle_change);
-    }
-    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-	tilt_camera_deg(camera, -cam_angle_change);
-    }
+    if(key_pressed(window, GLFW_KEY_E))
+	camera_move(&camera, vec3_scale(camera_up, cam_move));
+    if(key_pressed(window, GLFW_KEY_Q))
+	camera_move(&camera, vec3_scale(camera_up, -cam_move));
+
+    if(key_pressed(window, GLFW_KEY_K))
+	camera_add_pitch(&camera, delta_time);
+    if(key_pressed(window, GLFW_KEY_J))
+	camera_add_pitch(&camera, -delta_time);
+    if(key_pressed(window, GLFW_KEY_H))
+	camera_add_yaw(&camera, -delta_time);
+    if(key_pressed(window, GLFW_KEY_L))
+	camera_add_yaw(&camera, delta_time);
 }
-*/

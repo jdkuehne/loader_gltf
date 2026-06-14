@@ -65,6 +65,8 @@ inline U64 compose_uint(U32 low, U32 high) { return ((U64)low | ((U64)high << 32
 // TODO(jdk): more precise for f64?
 #define JK_PI64   3.14159
 
+#define JK_SQ(x) (x*x)
+
 #define JK_Rad32(deg) ((deg) * JK_PI32/180.0f)
 #define JK_Rad64(deg) ((deg) * JK_PI64/180.0)
 

@@ -9,7 +9,7 @@
 #include "shader.hpp"
 #include "gltf_load.hpp"
 #include "ui.hpp"
-#include "camera.hpp"
+#include "game.hpp"
 
 #include "ext/stb_image.h"
 #include "ext/glad/gl.h"
@@ -50,6 +50,9 @@ inline B8 key_pressed(GLFWwindow *window, int key) {
 }
 
 int main() {
+    Game game = {};
+    game.camera = make_camera(vec3(2, 2, 3), JK_Rad32(-10.f), JK_Rad32(-30.f));
+
     //##################################################
     // jdk: window setup
     GLFWwindow *window = window_setup();
@@ -65,7 +68,6 @@ int main() {
     U32 loc_joint_matrices = glGetUniformLocation(shader_program, "joint_matrices");
     U32 loc_has_skin = glGetUniformLocation(shader_program, "has_skin");
 
-    Camera camera = make_camera(vec3(2, 2, 3), JK_Rad32(-10.f), JK_Rad32(-30.f));
 
     Mat4 view = make_mat4_look_at(vec3(2,2,3), vec3(0,0,0), vec3(0,1,0));
     Mat4 projection = make_mat4_perspective(JK_Rad32(60.f), (F32)window_width/(F32)window_height, 0.1f, 100.f);
@@ -80,37 +82,11 @@ int main() {
     const F32 font_scale = 2.f;
 
     F64 last_time = glfwGetTime();
-    F64 delta_time = 0;
     F64 time_fps_counter = glfwGetTime();
     while(!glfwWindowShouldClose(window)) {
+	input(window, &game);
 
-	constexpr float cam_speed = 2.f;
-	const float cam_move = delta_time * cam_speed;
-	if(key_pressed(window, GLFW_KEY_D))
-	    camera_move(&camera, vec3_scale(vec3_cross(camera.dir, camera_up), cam_move));
-	if(key_pressed(window, GLFW_KEY_A))
-	    camera_move(&camera, vec3_scale(vec3_cross(camera.dir, camera_up), -cam_move));
-
-	if(key_pressed(window, GLFW_KEY_W))
-	    camera_move(&camera, vec3_scale(camera.dir, cam_move));
-	if(key_pressed(window, GLFW_KEY_S))
-	    camera_move(&camera, vec3_scale(camera.dir, -cam_move));
-
-	if(key_pressed(window, GLFW_KEY_E))
-	    camera_move(&camera, vec3_scale(camera_up, cam_move));
-	if(key_pressed(window, GLFW_KEY_Q))
-	    camera_move(&camera, vec3_scale(camera_up, -cam_move));
-
-	if(key_pressed(window, GLFW_KEY_K))
-	    camera_add_pitch(&camera, delta_time);
-	if(key_pressed(window, GLFW_KEY_J))
-	    camera_add_pitch(&camera, -delta_time);
-	if(key_pressed(window, GLFW_KEY_H))
-	    camera_add_yaw(&camera, -delta_time);
-	if(key_pressed(window, GLFW_KEY_L))
-	    camera_add_yaw(&camera, delta_time);
-
-	view = camera_look_at(&camera);
+	view = camera_look_at(&game.camera);
 
 	// @TODO(jdk): test quat after switching layout
 	Mat4 scale = make_mat4_scale(vec3(1.f));
@@ -151,7 +127,7 @@ int main() {
 	if(!fps_textobj || glfwGetTime() - 1.0 > time_fps_counter) {
 	    // TODO(jdk): make proper average, 1% low and stuff..
 	    delete_text_object(fps_textobj);
-	    I64 fps = (I64)(1.0/delta_time);
+	    I64 fps = (I64)(1.0/game.delta_time);
 	    Str8 fps_counter_str = str8_cat(str8c("FPS: "),
 		    str8_from_i64(fps, &default_temp_allocator), &default_temp_allocator);
 	    fps_textobj = new_text_object(fps_counter_str);
@@ -166,7 +142,7 @@ int main() {
 	glfwPollEvents();
 	// timer
 	F64 current_time = glfwGetTime();
-	delta_time = current_time - last_time;
+	game.delta_time = current_time - last_time;
 	last_time = current_time;
 	arena_reset(&default_temp_allocator_arena);
     }
