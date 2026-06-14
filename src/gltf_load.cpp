@@ -255,6 +255,9 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 		
 	    }
 
+	    // TODO(jdk): account for case 
+	    assert(prim->indices && "primitive doesn't have indices => all vertices, not handled yet");
+
 
 	    // jdk: vertex attributes setup
 	    glGenVertexArrays(1, &prim_meta->vao);

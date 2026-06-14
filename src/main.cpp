@@ -27,10 +27,8 @@
 #define JK_DUMP_PERSISTENT_ALLOC 0
 #define JK_PRINT_ALLOCATOR_STATE 0
 
-#define JK_FILE_NAME "MaterialTest.gltf"
-// #define JK_FILE_NAME "RiggedFigure.gltf"
-#define JK_ANIM_NAME "Square"
-// #define JK_ANIM_NAME "anim_0"
+#define JK_FILE_NAME "Fox.gltf"
+#define JK_ANIM_NAME "Walk"
 
 
 inline U64 game_time_ms_u64() {
@@ -60,6 +58,7 @@ int main() {
     U32 shader_program = create_shader_vf(
 	    "./src/shaders/main_vs.glsl",
 	    "./src/shaders/main_fs.glsl");
+    printf("%lu\n", shader_program);
     U32 loc_world = glGetUniformLocation(shader_program, "world");
     U32 loc_view = glGetUniformLocation(shader_program, "view");
     U32 loc_proj = glGetUniformLocation(shader_program, "proj");
@@ -126,6 +125,7 @@ int main() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(shader_program);
+	glUniform3fv(glGetUniformLocation(shader_program, "camera_pos"), 1, (F32 *)&camera.pos);
 	glUniformMatrix4fv(loc_view,  1, GL_FALSE, (float *)&view);
 	glUniformMatrix4fv(loc_proj,  1, GL_FALSE, (float *)&projection);
 
