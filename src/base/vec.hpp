@@ -5,6 +5,9 @@
 #include "mem/allocator.hpp"
 #include <math.h>
 
+#define JK_CompPasteVec3(v) (v).x, (v).y, (v).z
+#define JK_CompPasteVec2(v) (v).x, (v).y
+
 typedef union Vec2F32 {
     struct {
 	F32 x, y;
@@ -48,6 +51,8 @@ Vec3 vec3_translate_default();
 Vec3 vec3_scale_default();
 
 Vec2 vec2           (F32 x, F32 y);
+Vec2 vec2           (F32 val);
+Vec2 vec2_scale     (Vec2 v, F32 k);
 Vec2 vec2_normalize (Vec2 v);
 
 F32 *lerp(F32 *a, F32 *b, U64 count, F32 f, Allocator *allocator);

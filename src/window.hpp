@@ -3,6 +3,7 @@
 
 // #include "camera.hpp"
 #include "base/core.hpp"
+#include "base/vec.hpp"
 
 #include "ext/glad/gl.h"
 #include "ext/GLFW/glfw3.h"
@@ -10,7 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-struct WindowInput {
+struct Input {
     F32 axis_h;
     F32 axis_v;
     Vec2 wasd;
@@ -29,7 +30,11 @@ struct WindowInput {
 constexpr int window_width = 1280;
 constexpr int window_height = 720;
 
+inline B8 key_pressed(GLFWwindow *window, int key) {
+    return (glfwGetKey(window, key) == GLFW_PRESS);
+}
+
 GLFWwindow *window_setup();
-void input(GLFWwindow *window, WindowInput *input);
+void process_window_input(GLFWwindow *window, Input *input);
 
 #endif

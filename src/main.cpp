@@ -27,8 +27,8 @@
 #define JK_DUMP_PERSISTENT_ALLOC 0
 #define JK_PRINT_ALLOCATOR_STATE 0
 
-#define JK_FILE_NAME "Fox.gltf"
-#define JK_ANIM_NAME "Walk"
+#define JK_FILE_NAME "MaterialTest.gltf"
+#define JK_ANIM_NAME "anim_0"
 
 
 inline U64 game_time_ms_u64() {
@@ -45,17 +45,11 @@ const F32 window_color[] = {
     (F32)0x22/(F32)0xFF,
 };
 
-inline B8 key_pressed(GLFWwindow *window, int key) {
-    return (glfwGetKey(window, key) == GLFW_PRESS);
-}
-
 int main() {
     Game game = {};
-    game.camera = make_camera(vec3(2, 2, 3), JK_Rad32(-10.f), JK_Rad32(-30.f));
-
-    //##################################################
-    // jdk: window setup
+    game.camera.pos = vec3(0.f, 0.f, 2.f);
     GLFWwindow *window = window_setup();
+    Input input = {};
 
     // jdk: shaders
     U32 shader_program = create_shader_vf(
@@ -67,7 +61,6 @@ int main() {
     U32 loc_proj = glGetUniformLocation(shader_program, "proj");
     U32 loc_joint_matrices = glGetUniformLocation(shader_program, "joint_matrices");
     U32 loc_has_skin = glGetUniformLocation(shader_program, "has_skin");
-
 
     Mat4 view = make_mat4_look_at(vec3(2,2,3), vec3(0,0,0), vec3(0,1,0));
     Mat4 projection = make_mat4_perspective(JK_Rad32(60.f), (F32)window_width/(F32)window_height, 0.1f, 100.f);
@@ -84,24 +77,23 @@ int main() {
     F64 last_time = glfwGetTime();
     F64 time_fps_counter = glfwGetTime();
     while(!glfwWindowShouldClose(window)) {
-	input(window, &game);
+	process_window_input(window, &input);
+	camera_fps_move(&game.camera, vec3_scale(input.sphere, game.delta_time));
+	camera_fps_turn(&game.camera, vec2_scale(input.hjkl_n, game.delta_time));
 
 	view = camera_look_at(&game.camera);
 
 	// @TODO(jdk): test quat after switching layout
-	Mat4 scale = make_mat4_scale(vec3(1.f));
-	Quat q1 = quat_axis_angle(vec3(0.f, 1.f, 0.f), JK_Rad32(0.f));
-	Quat q2 = quat_axis_angle(vec3(0.f, 1.f, 0.f), JK_Rad32(0.f));
-	Quat q_rot = slerp(q1, q2, sinf(glfwGetTime()));
-	Mat4 rotation = make_mat4_rotate_quat(q_rot);
-	Mat4 translation = make_mat4_translate(vec3(0, 0 * sinf(glfwGetTime()), 0));
+	Mat4 scale = mat4(1.f);
+	Mat4 rotation = mat4(1.f);
+	Mat4 translation = mat4(1.f);
 	Mat4 world = mat4_mul3(translation, rotation, scale);
 
 	glClearColor(window_color[0], window_color[1], window_color[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(shader_program);
-	glUniform3fv(glGetUniformLocation(shader_program, "camera_pos"), 1, (F32 *)&camera.pos);
+	glUniform3fv(glGetUniformLocation(shader_program, "camera_pos"), 1, (F32 *)&game.camera.pos);
 	glUniformMatrix4fv(loc_view,  1, GL_FALSE, (float *)&view);
 	glUniformMatrix4fv(loc_proj,  1, GL_FALSE, (float *)&projection);
 

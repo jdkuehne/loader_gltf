@@ -5,7 +5,7 @@
 
 struct Game {
     F64 delta_time;
-    Camera camera;
+    Camera camera = make_camera();
 };
 
 #endif

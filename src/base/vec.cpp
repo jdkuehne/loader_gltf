@@ -75,15 +75,15 @@ Vec3 vec3_cross(Vec3 a, Vec3 b) {
 }
 
 F32 vec3_length(Vec3 v) {
-    F32 result = sqrt(v.x * v.x +
-		      v.y * v.y +
-		      v.z * v.z);
-    return result;
+    return sqrtf(JK_Sq(v.x) + JK_Sq(v.y) + JK_Sq(v.z));
 }
 
 Vec3 vec3_normalize(Vec3 v) {
-    Vec3 result = vec3_scale(v, 1.f / vec3_length(v));
-    return result;
+    F32 length = vec3_length(v);
+    if(length < 0.001f) {
+	return vec3(0.f);
+    }
+    return vec3_scale(v, 1.f/length);
 }
 
 Vec3 vec3_lerp(Vec3 a, Vec3 b, F32 f) {
@@ -101,11 +101,17 @@ Vec2 vec2(F32 x, F32 y) {
     Vec2 result = {.v = {x, y}};
     return result;
 }
+Vec2 vec2(F32 val) {
+    return vec2(val, val);
+}
 Vec2 vec2_scale(Vec2 v, F32 k) {
-    return vec2(v.x/k, v.y/k);
+    return vec2(v.x*k, v.y*k);
 }
 Vec2 vec2_normalize(Vec2 v) {
-    F32 length = sqrtf(JK_SQ(x) + JK_SQ(y));
+    F32 length = sqrtf(JK_Sq(v.x) + JK_Sq(v.y));
+    if(length < 0.001f) {
+	return vec2(0.f);
+    }
     return vec2_scale(v, 1.f/length);
 }
 

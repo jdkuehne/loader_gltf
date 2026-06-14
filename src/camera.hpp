@@ -20,12 +20,11 @@ inline void _camera_update_direction(Camera *camera) {
     camera->dir = vec3_normalize(vec3(x, y, z));
 }
 
-inline Camera make_camera(Vec3 pos, F32 pitch, F32 yaw) {
+inline Camera make_camera(Vec3 pos = vec3(0.f), F32 pitch = 0.f, F32 yaw = 0.f) {
     Camera result = {pos, vec3(0.f), pitch, yaw};
     _camera_update_direction(&result);
     return result;
 }
-
 
 inline void camera_set_pitch(Camera *camera, F32 pitch) {
     camera->pitch = pitch;
@@ -59,6 +58,12 @@ inline void camera_fps_move(Camera *camera, Vec3 move) {
     camera->pos = vec3_add(camera->pos, vec3_scale(camera_up, move.y));
     // jdk: apply front motion
     camera->pos = vec3_add(camera->pos, vec3_scale(camera->dir, move.z));
+}
+
+inline void camera_fps_turn(Camera *camera, Vec2 r) {
+    camera->yaw += r.x;
+    camera->pitch += r.y;
+    _camera_update_direction(camera);
 }
 
 inline Mat4 camera_look_at(Camera *camera) {

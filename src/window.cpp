@@ -74,7 +74,7 @@ GLFWwindow *window_setup() {
     return window;
 }
 
-void input(GLFWwindow *window, WindowInput *input) {
+void process_window_input(GLFWwindow *window, Input *input) {
     B8 w = key_pressed(window, GLFW_KEY_W);
     B8 a = key_pressed(window, GLFW_KEY_A);
     B8 s = key_pressed(window, GLFW_KEY_S);
@@ -89,24 +89,15 @@ void input(GLFWwindow *window, WindowInput *input) {
     input->axis_y = (F32)(e - q);
     input->axis_z = input->axis_v;
     input->sphere = vec3_normalize(vec3(input->axis_x, input->axis_y, input->axis_z));
-    
-    constexpr float cam_speed = 2.f;
-    const float cam_move = delta_time * cam_speed;
-    if(key_pressed(window, GLFW_KEY_D))
-	camera_move(&camera, vec3_scale(vec3_cross(camera.dir, camera_up), cam_move));
-    if(key_pressed(window, GLFW_KEY_A))
-	camera_move(&camera, vec3_scale(vec3_cross(camera.dir, camera_up), -cam_move));
 
-    if(key_pressed(window, GLFW_KEY_W))
-	camera_move(&camera, vec3_scale(camera.dir, cam_move));
-    if(key_pressed(window, GLFW_KEY_S))
-	camera_move(&camera, vec3_scale(camera.dir, -cam_move));
+    B8 h = key_pressed(window, GLFW_KEY_H);
+    B8 j = key_pressed(window, GLFW_KEY_J);
+    B8 k = key_pressed(window, GLFW_KEY_K);
+    B8 l = key_pressed(window, GLFW_KEY_L);
+    input->hjkl = vec2((F32)(l - h), (F32)(k - j));
+    input->hjkl_n = vec2_normalize(input->hjkl);
 
-    if(key_pressed(window, GLFW_KEY_E))
-	camera_move(&camera, vec3_scale(camera_up, cam_move));
-    if(key_pressed(window, GLFW_KEY_Q))
-	camera_move(&camera, vec3_scale(camera_up, -cam_move));
-
+    /*
     if(key_pressed(window, GLFW_KEY_K))
 	camera_add_pitch(&camera, delta_time);
     if(key_pressed(window, GLFW_KEY_J))
@@ -115,4 +106,5 @@ void input(GLFWwindow *window, WindowInput *input) {
 	camera_add_yaw(&camera, -delta_time);
     if(key_pressed(window, GLFW_KEY_L))
 	camera_add_yaw(&camera, delta_time);
+    */
 }

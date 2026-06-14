@@ -12,19 +12,23 @@ uniform vec3 camera_pos;
 // uniform sampler2D tex_base_color;
 // uniform sampler2D tex_metallic_roughness;
 
-float square(float x) {
+float pow2(float x) {
     return x*x;
+}
+
+float pow4(float x) {
+    return x*x * x*x;
 }
 
 void main() {
     const float one_over_pi = 1.0/3.14159;
 
     const float metallic = 0.0;
-    const float roughness = 0.1;
+    const float roughness = 0.4;
 
-    const vec3 light_pos = vec3(-2.0, 2.0, 5.0);
-    const vec3 light_color = vec3(2.0);
-    const vec3 color = vec3(0.79, 0.78, 0.8);
+    const vec3 light_pos = vec3(-2.0, 2.0, 4.0);
+    const vec3 light_color = vec3(5.0);
+    const vec3 color = vec3(0.79, 0.65, 0.34);
 
     vec3 l = normalize(light_pos - frag_pos);
     vec3 n = frag_norm;
@@ -38,42 +42,23 @@ void main() {
     float dot_lh = max(dot(l, h), 0.0);
 
     // jdk: attenuation
-    float ldist = length(l);
-    vec3 light_power_in = light_color/(ldist*ldist) * dot_nl;
+    float ldist = distance(light_pos, frag_pos);
+    vec3 light_power_in = light_color/(ldist * ldist) * dot_nl;
 
-    // jdk: trowbridge-reitz makes the distribution "hyperbolic" which looks pretty smooth
-    float rough_param = square(roughness * roughness); // jdk: pow4 remapping
-    float dot_nh_square = dot_nh * dot_nh;
-    float nd_denom = square(dot_nh_square * (1.0 - rough_param) - 1.0);
-    float d = rough_param * one_over_pi / nd_denom;
+    float diffuse_modifier = 0.4f;
+    float specular_modifier = 0.2f;
+    float ambient_modifier = 0.03f;
 
-    float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
-    float g0 = dot_nv / (dot_nv * (1.0 - k) + k);
-    float g1 = dot_nl / (dot_nl * (1.0 - k) + k);
-    float g = g0 * g1;
-
-    // jdk: fresnel schlick
-    vec3 f0_dielectric = vec3(0.04);
-    vec3 f0 = mix(f0_dielectric, color, metallic);
-    vec3 f = f0 + (1.0 - f0) * pow(1.0 - dot_lh, 5.0);
-
-    // TODO(jdk): why /(cos_alpha*cos_beta)??? isn't this shit solved already via fresnel?
-    vec3 ks = d*g*f / (4.0 * dot_nv*dot_nl + 0.001);
-    vec3 kd = (1.0 - metallic) * one_over_pi *color;
-    vec3 light_power_out = (ks + kd) * light_power_in;
-
+    // jdk: based on trowbridge reitz distribution
+    // @TODO(jdk): try out more stuff with these functions (why not 1 as nominator?)
+    vec3 specular_color_dielectric = vec3(0.04);
+    vec3 specular_color = mix(specular_color_dielectric, color, metallic);
+    float a = pow4(roughness);
+    // @TODO(jdk): for now this is good enough
+    vec3 specular = (specular_modifier * a)/pow2(pow2(dot_nh)*(1-a) - 1) * specular_color;
+    vec3 diffuse = (1.0 - metallic) * diffuse_modifier * color;
     vec3 ambient = vec3(0.03) * color;
+    vec3 result_color = (diffuse + specular) * light_power_in + ambient;
 
-    vec3 result_color = light_power_out + ambient;
     frag_color = vec4(result_color, 1.0);
 }
-// NOTES:
-
-// jdk: fresnel reflection at normal incidence ((n0 - n1)*(n0 + n1))^2
-// e.g. polyethylene: 1.5 => 0.5/2.5 = 0.2*0.2 = 0.04
-// metalls only reflect => reflection is color
-
-// jdk: dot(L, H) because
-// fresnel calculates "perfect reflection" => halfway is the normal,
-// and the normal distribution then multiplies by how often we actually
-// get this case with microfacets??
