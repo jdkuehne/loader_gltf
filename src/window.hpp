@@ -10,14 +10,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+struct WindowInput {
+    F32 axis_h;
+    F32 axis_v;
+    Vec2 wasd;
+    // jdk: normalized
+    Vec2 wasd_n;
+    F32 axis_x;
+    F32 axis_y;
+    F32 axis_z;
+    Vec3 sphere;
+
+    // jdk: like in vim
+    Vec2 hjkl;
+    Vec2 hjkl_n;
+};
+
 constexpr int window_width = 1280;
 constexpr int window_height = 720;
-/*
-#define CAM_MOVE_SPEED 3.0f
-#define CAM_ROTATE_SPEED 35.f
-*/
 
 GLFWwindow *window_setup();
-// void handle_input(GLFWwindow *window, Camera *camera, float delta_time);
+void input(GLFWwindow *window, WindowInput *input);
 
 #endif

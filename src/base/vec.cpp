@@ -101,6 +101,13 @@ Vec2 vec2(F32 x, F32 y) {
     Vec2 result = {.v = {x, y}};
     return result;
 }
+Vec2 vec2_scale(Vec2 v, F32 k) {
+    return vec2(v.x/k, v.y/k);
+}
+Vec2 vec2_normalize(Vec2 v) {
+    F32 length = sqrtf(JK_SQ(x) + JK_SQ(y));
+    return vec2_scale(v, 1.f/length);
+}
 
 F32 *lerp(F32 *a, F32 *b, U64 count, F32 f, Allocator *allocator) {
     F32 *result = mem_alloc<F32>(count, allocator);

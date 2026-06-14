@@ -51,6 +51,16 @@ inline void camera_move(Camera *camera, Vec3 move) {
     camera->pos = vec3_add(camera->pos, move);
 }
 
+// jdk: move like in first person shooter => left = cross(dir, up)...
+inline void camera_fps_move(Camera *camera, Vec3 move) {
+    // jdk: apply side motion
+    camera->pos = vec3_add(camera->pos, vec3_scale(vec3_cross(camera->dir, camera_up), move.x));
+    // jdk: apply up/down motion
+    camera->pos = vec3_add(camera->pos, vec3_scale(camera_up, move.y));
+    // jdk: apply front motion
+    camera->pos = vec3_add(camera->pos, vec3_scale(camera->dir, move.z));
+}
+
 inline Mat4 camera_look_at(Camera *camera) {
     return make_mat4_look_at(camera->pos, vec3_add(camera->pos, camera->dir), camera_up);
 }

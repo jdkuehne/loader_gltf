@@ -48,6 +48,7 @@ Vec3 vec3_translate_default();
 Vec3 vec3_scale_default();
 
 Vec2 vec2           (F32 x, F32 y);
+Vec2 vec2_normalize (Vec2 v);
 
 F32 *lerp(F32 *a, F32 *b, U64 count, F32 f, Allocator *allocator);
 
