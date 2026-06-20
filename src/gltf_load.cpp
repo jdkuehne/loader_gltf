@@ -504,16 +504,16 @@ static void gltf_apply_skeleton_joints(GLTFModel *model, cgltf_node *joint, Node
 //#####################################################################################
 // @TAG jdk: main gltf drawing funcs
 
-static void gltf_draw_node(GLTFModel *model, cgltf_node *node);
+static void gltf_draw_node(GLTFModel *model, Mat4 base_matrix, cgltf_node *node);
 
-void gltf_draw(GLTFModel *model) {
+void gltf_draw(GLTFModel *model, Mat4 base_matrix) {
     cgltf_scene *scene = model->data->scene;
     for(U64 inode = 0; inode < scene->nodes_count; ++inode) {
-	gltf_draw_node(model, scene->nodes[inode]);
+	gltf_draw_node(model, base_matrix, scene->nodes[inode]);
     }
 }
 
-static void gltf_draw_node(GLTFModel *model, cgltf_node *node) {
+static void gltf_draw_node(GLTFModel *model, Mat4 base_matrix, cgltf_node *node) {
     cgltf_skin *skin = node->skin;
     cgltf_mesh *mesh = node->mesh;
     NodeMeta *node_meta = list_find(&model->nodes_meta, match_node, node);
@@ -526,17 +526,17 @@ static void gltf_draw_node(GLTFModel *model, cgltf_node *node) {
 		Mat4 bind_matrix = node_meta->inverse_bind_matrices.ptr[ijoint];
 		// TODO(jdk): account for doubles
 		Mat4 joint_matrix = mat4_mul(joint_skeleton_matrix, bind_matrix);
-		U32 location_joint_matrix = model->draw.location_joint_matrices + ijoint;
+		U32 location_joint_matrix = main_shader.location_joint_matrices + ijoint;
 		glUniformMatrix4fv(location_joint_matrix, 1, GL_FALSE, (F32 *)&joint_matrix);
 	    }
 	}
-	Mat4 final_matrix = mat4_mul(model->draw.base_transform, node_meta->world_matrix);
-	glUniformMatrix4fv(model->draw.location_world_matrix, 1, GL_FALSE, (F32 *)&final_matrix);
-	glUniform1i(model->draw.location_has_skin, node_meta->has_skin);
+	Mat4 final_matrix = mat4_mul(base_matrix, node_meta->world_matrix);
+	glUniformMatrix4fv(main_shader.location_world, 1, GL_FALSE, (F32 *)&final_matrix);
+	glUniform1i(main_shader.location_has_skin, node_meta->has_skin);
 	// jdk: color
-	glUniform3f(glGetUniformLocation(model->draw.program, "color"), 0.5, 0.3, 0.15);
+	glUniform3f(glGetUniformLocation(main_shader.id, "color"), 0.5, 0.3, 0.15);
 	// jdk: morph targets
-	glUniform1fv(glGetUniformLocation(model->draw.program, "morph_weights"),
+	glUniform1fv(glGetUniformLocation(main_shader.id, "morph_weights"),
 		node_meta->morph_weights.len, node_meta->morph_weights.ptr);
 	for(U64 iprim = 0; iprim < mesh->primitives_count; ++iprim) {
 	    cgltf_primitive *prim = &mesh->primitives[iprim];
@@ -547,7 +547,7 @@ static void gltf_draw_node(GLTFModel *model, cgltf_node *node) {
 		    Arena arena = make_arena(1024); // @TODO(jdk): get rid of this
 		    Str8 index_str = str8_from_i64(imorph_attrib, &default_temp_allocator);
 		    Str8 loc_str = str8_cat(str8c("morph_texture"), index_str, &default_temp_allocator);
-		    U32 location = glGetUniformLocation(model->draw.program,
+		    U32 location = glGetUniformLocation(main_shader.id,
 			    cstr_copy_from_str8(loc_str, &default_temp_allocator));
 
 		    glUniform1i(location, imorph_attrib);
@@ -564,6 +564,6 @@ static void gltf_draw_node(GLTFModel *model, cgltf_node *node) {
     }
     // jdk: get child nodes call recursively
     for(U64 ichild = 0; ichild < node->children_count; ++ichild) {
-	gltf_draw_node(model, node->children[ichild]);
+	gltf_draw_node(model, base_matrix, node->children[ichild]);
     }
 }

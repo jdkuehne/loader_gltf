@@ -57,7 +57,7 @@ void main() {
     // @TODO(jdk): for now this is good enough
     vec3 specular = (specular_modifier * a)/pow2(pow2(dot_nh)*(1-a) - 1) * specular_color;
     vec3 diffuse = (1.0 - metallic) * diffuse_modifier * color;
-    vec3 ambient = vec3(0.03) * color;
+    vec3 ambient = ambient_modifier * color;
     vec3 result_color = (diffuse + specular) * light_power_in + ambient;
 
     frag_color = vec4(result_color, 1.0);

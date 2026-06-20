@@ -8,6 +8,8 @@
 #include "base/os/file.hpp"
 #include "base/containers.hpp"
 
+#include "shader.hpp"
+
 #include "ext/cgltf.h"
 
 #include "ext/glad/gl.h"
@@ -91,13 +93,6 @@ struct GLTFModel {
     List<GLTFBin> bin_files;
     cgltf_data *data;
     struct {
-	U32 program;
-	U32 location_world_matrix;
-	U32 location_joint_matrices;
-	U32 location_has_skin;
-	Mat4 base_transform;
-    } draw;
-    struct {
 	Str8 name_current;
 	U64 time_ms;
     } anim;
@@ -116,6 +111,6 @@ GLTFModel *gltf_load(GLTFLoadParams *params);
 void gltf_destroy(GLTFModel *model);
 
 void gltf_animate(GLTFModel *model);
-void gltf_draw(GLTFModel *model);
+void gltf_draw(GLTFModel *model, Mat4 base_matrix);
 
 #endif // GLTF_LOAD_H

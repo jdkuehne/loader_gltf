@@ -39,31 +39,39 @@ inline F64 game_time_ms_f64() {
     return glfwGetTime() * 1000.0;
 }
 
-const F32 window_color[] = {
-    (F32)0x22/(F32)0xFF,
-    (F32)0x22/(F32)0xFF,
-    (F32)0x22/(F32)0xFF,
-};
+inline void set_clear_color_rgb8(U8 r, U8 g, U8 b) {
+    Vec3 rgbf = vec3_rgb8(r, g, b);
+    glClearColor(JK_CompPasteVec3(rgbf), 1.f);
+}
+
+void draw_fps_counter() {
+    constexpr Vec3 color = vec3_rgb8(50, 100, 220);
+    constexpr F32 period = 1.f;
+    static F32 last_time = 0.f;
+    static TextObject *text_obj = NULL;
+    if(!text_obj || glfwGetTime() - period > last_time) {
+	// TODO(jdk): make proper average, 1% low and stuff..
+	delete_text_object(text_obj);
+	I64 fps = (I64)(1.0/game.delta_time);
+	Str8 fps_str = str8_from_i64(fps, &default_temp_allocator);
+	Str8 text = str8_cat(str8c("FPS: "),
+		str8_from_i64(fps, &default_temp_allocator), &default_temp_allocator);
+	fps_textobj = new_text_object(fps_counter_str);
+	time_fps_counter = glfwGetTime();
+    }
+    draw_textbox_no_background(fps_textobj, , font_scale,
+			       window_width - (fps_textobj->w * font_scale + 20), 20, window_width, window_height);
+}
 
 int main() {
     Game game = {};
     game.camera.pos = vec3(0.f, 0.f, 2.f);
     GLFWwindow *window = window_setup();
+    F32 aspect_ratio = (F32)window_width/(F32)window_height;
     Input input = {};
 
-    // jdk: shaders
-    U32 shader_program = create_shader_vf(
-	    "./src/shaders/main_vs.glsl",
-	    "./src/shaders/main_fs.glsl");
-    printf("%lu\n", shader_program);
-    U32 loc_world = glGetUniformLocation(shader_program, "world");
-    U32 loc_view = glGetUniformLocation(shader_program, "view");
-    U32 loc_proj = glGetUniformLocation(shader_program, "proj");
-    U32 loc_joint_matrices = glGetUniformLocation(shader_program, "joint_matrices");
-    U32 loc_has_skin = glGetUniformLocation(shader_program, "has_skin");
-
-    Mat4 view = make_mat4_look_at(vec3(2,2,3), vec3(0,0,0), vec3(0,1,0));
-    Mat4 projection = make_mat4_perspective(JK_Rad32(60.f), (F32)window_width/(F32)window_height, 0.1f, 100.f);
+    setup_main_shader();
+    main_shader_set_projection(JK_Rad32(60.f), aspect_ratio, 0.1f, 100.f);
 
     TextObject *text1 = new_text_object(str8c("GLTF animation test v0.1"));
 
@@ -77,36 +85,22 @@ int main() {
     F64 last_time = glfwGetTime();
     F64 time_fps_counter = glfwGetTime();
     while(!glfwWindowShouldClose(window)) {
+	set_clear_color_rgb8(0x22, 0x22, 0x22);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// jdk: input, camera, shader update
 	process_window_input(window, &input);
 	camera_fps_move(&game.camera, vec3_scale(input.sphere, game.delta_time));
 	camera_fps_turn(&game.camera, vec2_scale(input.hjkl_n, game.delta_time));
-
-	view = camera_look_at(&game.camera);
+	main_shader_set_view_and_camera(&game.camera);
 
 	// @TODO(jdk): test quat after switching layout
-	Mat4 scale = mat4(1.f);
-	Mat4 rotation = mat4(1.f);
-	Mat4 translation = mat4(1.f);
-	Mat4 world = mat4_mul3(translation, rotation, scale);
 
-	glClearColor(window_color[0], window_color[1], window_color[2], 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glUseProgram(shader_program);
-	glUniform3fv(glGetUniformLocation(shader_program, "camera_pos"), 1, (F32 *)&game.camera.pos);
-	glUniformMatrix4fv(loc_view,  1, GL_FALSE, (float *)&view);
-	glUniformMatrix4fv(loc_proj,  1, GL_FALSE, (float *)&projection);
-
+	glUseProgram(main_shader.id);
 	model->anim.time_ms = game_time_ms_u64();
 	model->anim.name_current = str8c(JK_ANIM_NAME);
 	gltf_animate(model);
-
-	model->draw.program = shader_program;
-	model->draw.location_world_matrix = loc_world;
-	model->draw.location_joint_matrices = loc_joint_matrices;
-	model->draw.location_has_skin = loc_has_skin;
-	model->draw.base_transform = world;
-	gltf_draw(model);
+	gltf_draw(model, mat4(1.f));
 	glUseProgram(0);
 
 
@@ -115,18 +109,6 @@ int main() {
 	draw_textbox_no_background(text1, vec3_rgb8(180, 120, 80), font_scale,
 				   20, 20, window_width, window_height);
 	// jdk: fps counter...
-	static TextObject *fps_textobj = NULL;
-	if(!fps_textobj || glfwGetTime() - 1.0 > time_fps_counter) {
-	    // TODO(jdk): make proper average, 1% low and stuff..
-	    delete_text_object(fps_textobj);
-	    I64 fps = (I64)(1.0/game.delta_time);
-	    Str8 fps_counter_str = str8_cat(str8c("FPS: "),
-		    str8_from_i64(fps, &default_temp_allocator), &default_temp_allocator);
-	    fps_textobj = new_text_object(fps_counter_str);
-	    time_fps_counter = glfwGetTime();
-	}
-	draw_textbox_no_background(fps_textobj, vec3_rgb8(50, 100, 220), font_scale,
-				   window_width - (fps_textobj->w * font_scale + 20), 20, window_width, window_height);
 
 	//##################################################
 	// jdk: end of frame

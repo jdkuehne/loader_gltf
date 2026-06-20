@@ -4,7 +4,7 @@ cd bin
 
 cl /c /nologo /EHsc /Zi /std:c++20 /DJK_COMPILER_MSVC=1 /DJK_OS_WIN32=1 ../src/main.cpp
 cl /c /nologo /EHsc /Zi /std:c++20 /DJK_COMPILER_MSVC=1 /DJK_OS_WIN32=1 ../src/window.cpp
-cl /c /nologo /EHsc /Zi /std:c++20 /DJK_COMPILER_MSVC=1 /DJK_OS_WIN32=1 ../src/shader.cpp
+cl /c /nologo /EHsc /Zi /P /std:c++20 /DJK_COMPILER_MSVC=1 /DJK_OS_WIN32=1 /Fi:shader_preproc ../src/shader.cpp
 cl /c /nologo /EHsc /Zi /std:c++20 /DJK_COMPILER_MSVC=1 /DJK_OS_WIN32=1 ../src/gltf_load.cpp
 cl /c /nologo /EHsc /Zi /std:c++20 /DJK_COMPILER_MSVC=1 /DJK_OS_WIN32=1 ../src/ui.cpp
 

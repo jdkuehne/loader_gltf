@@ -1,6 +1,8 @@
 #include "shader.hpp"
 
+#include "base/mat.hpp"
 #include "base/mem/allocator.hpp"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -88,38 +90,30 @@ U32 create_shader_vgf(const char *vs_path, const char *gs_path, const char *fs_p
     return program;
 }
 
-void delete_shader(U32 program)
-{
+void delete_shader(U32 program) {
     glDeleteProgram(program);
 }
 
-/*
-
-////////////////////////////////////////
-// simple type uniforms
-void uniform_i32(U32 program, const char *uniform_name, I32 value) {
-    glUniform1i(glGetUniformLocation(program, uniform_name), value);
-}
-void uniform_f32(U32 program, const char *uniform_name, F32 value) {
-    glUniform1f(glGetUniformLocation(program, uniform_name), value);
-}
-void uniform_f32_num3(U32 program, const char *uniform_name, F32 first, F32 second, F32 third) {
-    glUniform3f(glGetUniformLocation(program, uniform_name), first, second, third);
-}
-void uniform_f32_vec3(U32 program, const char *uniform_name, const F32 *values) {
-    glUniform3fv(glGetUniformLocation(program, uniform_name), 1, values);
-}
-void uniform_f32_mat4x4(U32 program, const char *uniform_name, const F32 *values) {
-    glUniformMatrix4fv(glGetUniformLocation(program, uniform_name), 1, GL_FALSE, values);
+void setup_main_shader() {
+    main_shader.id = create_shader_vf(JK_MAIN_VS_PATH, JK_MAIN_FS_PATH);
+    main_shader.location_projection = glGetUniformLocation(main_shader.id, "proj");
+    main_shader.location_view = glGetUniformLocation(main_shader.id, "view");
+    main_shader.location_world = glGetUniformLocation(main_shader.id, "world");
+    main_shader.location_joint_matrices = glGetUniformLocation(main_shader.id, "joint_matrices");
+    main_shader.location_has_skin = glGetUniformLocation(main_shader.id, "has_skin");
 }
 
-////////////////////////////////////////
-// glm types
-void uniform_glm_vec3(U32 program, const char *uniform_name, const glm::vec3 *vector) {
-    glUniform3fv(glGetUniformLocation(program, uniform_name), 1, glm::value_ptr(*vector));
-}
-void uniform_glm_mat4(U32 program, const char *uniform_name, const glm::mat4 *matrix) {
-    glUniformMatrix4fv(glGetUniformLocation(program, uniform_name), 1, GL_FALSE, glm::value_ptr(*matrix));
+void main_shader_set_view_and_camera(Camera *camera) {
+    Mat4 view = camera_look_at(camera);
+    glUseProgram(main_shader.id);
+    glUniformMatrix4fv(main_shader.location_view, 1, GL_FALSE, (F32 *)&view);
+    glUniform3fv(main_shader.location_camera_position, 1, (F32 *)&camera->pos);
+    glUseProgram(0);
 }
 
-*/
+void main_shader_set_projection(F32 fov, F32 aspect_ratio, F32 near_plane, F32 far_plane) {
+    Mat4 projection = make_mat4_perspective(fov, aspect_ratio, near_plane, far_plane);
+    glUseProgram(main_shader.id);
+    glUniformMatrix4fv(main_shader.location_projection, 1, GL_FALSE, (F32 *)&projection);
+    glUseProgram(0);
+}
