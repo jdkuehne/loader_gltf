@@ -5,11 +5,11 @@
 template <typename T>
 struct Slice {
     T *ptr;
-    U64 len;
+    uint64_t len;
 };
 
 template <typename T>
-Slice<T> make_slice(T *ptr, U64 len) {
+Slice<T> make_slice(T *ptr, uint64_t len) {
     return {ptr, len};
 }
 
@@ -23,13 +23,13 @@ Slice<T> make_slice(T *ptr, U64 len) {
 template <typename T>
 struct Stack {
     T *buf;
-    U64 len;
-    U64 cap;
+    uint64_t len;
+    uint64_t cap;
 };
 
 template <typename T>
-Stack<T> make_stack(U64 cap, Allocator *allocator = &default_allocator) {
-    return {mem_alloc<T>(cap, allocator), 0, cap};
+Stack<T> make_stack(uint64_t cap, Allocator *allocator = &cstd_allocator) {
+    return {alloc<T>(cap, allocator), 0, cap};
 }
 
 template <typename T>
@@ -42,8 +42,8 @@ T *stack_push(Stack<T> *stack, T elem) {
 }
 
 template <typename T, typename ArgT>
-T *stack_find(Stack<T> *stack, B8 (*fn_condition)(T *, ArgT), ArgT arg) {
-    for(U64 i = 0; i < stack->len; ++i) {
+T *stack_find(Stack<T> *stack, bool (*fn_condition)(T *, ArgT), ArgT arg) {
+    for(uint64_t i = 0; i < stack->len; ++i) {
 	T *current = &stack->buf[i];
 	if(fn_condition(current, arg)) {
 	    return current;
@@ -58,13 +58,13 @@ T *stack_find(Stack<T> *stack, B8 (*fn_condition)(T *, ArgT), ArgT arg) {
 template <typename T>
 struct List {
     T *buf;
-    U64 len;
-    U64 cap;
+    uint64_t len;
+    uint64_t cap;
 };
 
 /* @TODO(jdk): add multiple ways to allocate */
 template <typename T>
-List<T> make_list(U64 start_capacity = JK_LIST_DEFAULT_START_CAPACITY) {
+List<T> make_list(uint64_t start_capacity = JK_LIST_DEFAULT_START_CAPACITY) {
     return {(T *)malloc(start_capacity * sizeof(T)), 0, start_capacity};
 }
 
@@ -78,7 +78,7 @@ static void _list_ensure_init(List<T> *list) {
 template <typename T>
 static void _list_ensure_cap_for_push(List<T> *list) {
     if(list->len + 1 > list->cap) {
-	U64 new_cap = ceil(1.5 * (list->cap + 1));
+	uint64_t new_cap = ceil(1.5 * (list->cap + 1));
 	T *temp = list->buf;
 	list->buf = (T *)malloc(new_cap * sizeof(T));
 	memcpy(list->buf, temp, list->len * sizeof(T));
@@ -114,8 +114,8 @@ T *list_push(List<T> *list, T *pval) {
 }
 
 template <typename T, typename ArgT>
-T *list_find(List<T> *list, B8 (*fn_condition)(T *, ArgT), ArgT arg) {
-    for(U64 i = 0; i < list->len; ++i) {
+T *list_find(List<T> *list, bool (*fn_condition)(T *, ArgT), ArgT arg) {
+    for(uint64_t i = 0; i < list->len; ++i) {
 	T *current = &list->buf[i];
 	if(fn_condition(current, arg)) {
 	    return current;
@@ -133,15 +133,15 @@ struct Link {
 };
 
 template <typename T>
-T *link_push(Link<T> **first, T val, Allocator *allocator = &default_allocator) {
+T *link_push(Link<T> **first, T val, Allocator *allocator = &cstd_allocator) {
     if(*first == NULL) {
-	*first = mem_alloc<Link<T>>(allocator);
+	*first = alloc<Link<T>>(allocator);
 	(*first)->next = *first;
 	(*first)->prev = *first;
 	(*first)->val = val;
 	return &(*first)->val;
     } else {
-	Link<T> *new_elem = mem_alloc<Link<T>>(allocator);
+	Link<T> *new_elem = alloc<Link<T>>(allocator);
 	new_elem->prev = (*first)->prev;
 	new_elem->next = *first;
 	new_elem->val = val;
@@ -153,7 +153,7 @@ T *link_push(Link<T> **first, T val, Allocator *allocator = &default_allocator) 
 }
 
 template <typename T, typename ArgT>
-T *link_find(Link<T> *first, B8 (*fn_condition)(T *, ArgT), ArgT arg) {
+T *link_find(Link<T> *first, bool (*fn_condition)(T *, ArgT), ArgT arg) {
     if(first == NULL) {
 	return NULL;
     }

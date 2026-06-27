@@ -1,41 +1,32 @@
 #ifndef GLTF_LOAD_H
 #define GLTF_LOAD_H
 
-#include "base/core.hpp"
-#include "base/str.hpp"
-#include "base/mat.hpp"
-#include "base/mem/allocator.hpp"
-#include "base/os/file.hpp"
-#include "base/containers.hpp"
-
+#include "jbase.hpp"
+#include "jmath.hpp"
+#include "transform.hpp"
+#include "containers.hpp"
 #include "shader.hpp"
-
 #include "ext/cgltf.h"
-
 #include "ext/glad/gl.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define JK_NUM_MORPH_ATTRIBS 7
 
 using AttribGroup = Stack<cgltf_attribute *>;
 
 struct AnimStep {
-    U64 i0, i1;
-    F32 interpolation_factor;
+    uint64_t i0, i1;
+    float interpolation_factor;
 };
 
 
 struct PrimMeta {
     // jdk: this address is used as key to find corresponding data
     cgltf_primitive *key;
-    U32 vbo, ebo, vao;
-    U64 indices_count;
+    uint32_t vbo, ebo, vao;
+    uint64_t indices_count;
     GLenum indices_type;
     // jdk: one texture per attrib, second dimension are the other morph targets
-    U32 morph_attribute_textures[JK_NUM_MORPH_ATTRIBS];
+    uint32_t morph_attribute_textures[JK_NUM_MORPH_ATTRIBS];
 };
 
 // NOTE(jdk): Channel and AnimMeta are linked lists because there's no proper way to know
@@ -45,7 +36,7 @@ struct ChannelMeta {
     cgltf_animation_path_type target;
     cgltf_interpolation_type interpolation;
     // TODO(jdk): what to do if weights?
-    U64 num_frames;
+    uint64_t num_frames;
     Str8 input;
     Str8 output;
 };
@@ -60,20 +51,20 @@ struct AnimMeta {
 struct SkinJointsData {
     cgltf_node **joints;
     Mat4 *skeleton_matrices;
-    U64 len;
+    uint64_t len;
 };
 
 struct NodeMeta {
     cgltf_node *key;
 
-    B8 has_skin;
-    B8 has_normal_mapping;
+    bool has_skin;
+    bool has_normal_mapping;
 
     Mat4 static_matrix;
     Mat4 matrix;
     Mat4 world_matrix;
 
-    Slice<F32> morph_weights;
+    Slice<float> morph_weights;
 
     SkinJointsData skin_data;
     Slice<Mat4> inverse_bind_matrices;
@@ -94,7 +85,7 @@ struct GLTFModel {
     cgltf_data *data;
     struct {
 	Str8 name_current;
-	U64 time_ms;
+	uint64_t time_ms;
     } anim;
 };
 

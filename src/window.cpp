@@ -49,11 +49,11 @@ GLFWwindow *window_setup() {
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
     GLFWwindow *window = glfwCreateWindow(window_width, window_height, "Dongus", NULL, NULL);
-    if(!window) exit(JK_ERROR_WINDOWCREATE);
+    if(!window) exit(JM_ERROR_WINDOWCREATE);
 
     glfwMakeContextCurrent(window);    
     int version = gladLoadGL(glfwGetProcAddress);
-    if(!version) exit(JK_ERROR_LOADGLPROCS);
+    if(!version) exit(JM_ERROR_LOADGLPROCS);
 
     int framebuffer_width, framebuffer_height;
     glfwGetFramebufferSize(window, &framebuffer_width, &framebuffer_height);
@@ -75,26 +75,26 @@ GLFWwindow *window_setup() {
 }
 
 void process_window_input(GLFWwindow *window, Input *input) {
-    B8 w = key_pressed(window, GLFW_KEY_W);
-    B8 a = key_pressed(window, GLFW_KEY_A);
-    B8 s = key_pressed(window, GLFW_KEY_S);
-    B8 d = key_pressed(window, GLFW_KEY_D);
-    input->axis_h = (F32)(d - a);
-    input->axis_v = (F32)(w - s);
+    bool w = key_pressed(window, GLFW_KEY_W);
+    bool a = key_pressed(window, GLFW_KEY_A);
+    bool s = key_pressed(window, GLFW_KEY_S);
+    bool d = key_pressed(window, GLFW_KEY_D);
+    input->axis_h = (float)(d - a);
+    input->axis_v = (float)(w - s);
     input->wasd = vec2(input->axis_h, input->axis_v);
     input->wasd_n = vec2_normalize(input->wasd);
-    B8 e = key_pressed(window, GLFW_KEY_E);
-    B8 q = key_pressed(window, GLFW_KEY_Q);
+    bool e = key_pressed(window, GLFW_KEY_E);
+    bool q = key_pressed(window, GLFW_KEY_Q);
     input->axis_x = input->axis_h;
-    input->axis_y = (F32)(e - q);
+    input->axis_y = (float)(e - q);
     input->axis_z = input->axis_v;
     input->sphere = vec3_normalize(vec3(input->axis_x, input->axis_y, input->axis_z));
 
-    B8 h = key_pressed(window, GLFW_KEY_H);
-    B8 j = key_pressed(window, GLFW_KEY_J);
-    B8 k = key_pressed(window, GLFW_KEY_K);
-    B8 l = key_pressed(window, GLFW_KEY_L);
-    input->hjkl = vec2((F32)(l - h), (F32)(k - j));
+    bool h = key_pressed(window, GLFW_KEY_H);
+    bool j = key_pressed(window, GLFW_KEY_J);
+    bool k = key_pressed(window, GLFW_KEY_K);
+    bool l = key_pressed(window, GLFW_KEY_L);
+    input->hjkl = vec2((float)(l - h), (float)(k - j));
     input->hjkl_n = vec2_normalize(input->hjkl);
 
     /*

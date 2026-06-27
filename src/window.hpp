@@ -1,10 +1,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-// #include "camera.hpp"
-#include "base/core.hpp"
-#include "base/vec.hpp"
-
+#include "jmath.hpp"
 #include "ext/glad/gl.h"
 #include "ext/GLFW/glfw3.h"
 
@@ -12,14 +9,14 @@
 #include <stdio.h>
 
 struct Input {
-    F32 axis_h;
-    F32 axis_v;
+    float axis_h;
+    float axis_v;
     Vec2 wasd;
     // jdk: normalized
     Vec2 wasd_n;
-    F32 axis_x;
-    F32 axis_y;
-    F32 axis_z;
+    float axis_x;
+    float axis_y;
+    float axis_z;
     Vec3 sphere;
 
     // jdk: like in vim
@@ -30,7 +27,7 @@ struct Input {
 constexpr int window_width = 1280;
 constexpr int window_height = 720;
 
-inline B8 key_pressed(GLFWwindow *window, int key) {
+inline bool key_pressed(GLFWwindow *window, int key) {
     return (glfwGetKey(window, key) == GLFW_PRESS);
 }
 

@@ -4,19 +4,19 @@ static TextShaderInfo *shader_info = NULL;
 
 // NOTE(jdk): new indicates that result is heap allocated via the context's heap_alloc
 TextObject *new_text_object(Str8 text) {
-    TextObject *result = mem_alloc<TextObject>();
-    char *text_cstr = cstr_copy_from_str8(text, &default_temp_allocator);
+    TextObject *result = alloc<TextObject>();
+    char *text_cstr = cstr_from_str8(text, &temp_allocator);
 
-    U64 bufsize = text.len * 512;
-    void *buffer = mem_alloc<F32>(bufsize, &default_temp_allocator);
-    U64 num_quads = stb_easy_font_print(0.f, 0.f, text_cstr, NULL, buffer, bufsize);
-    U64 num_indices = num_quads * 6;
-    U64 indices_bufsize = num_indices * sizeof(U32);
-    U32 *indices_buffer = mem_alloc<U32>(indices_bufsize, &default_temp_allocator);
+    uint64_t bufsize = text.len * 512;
+    void *buffer = alloc<float>(bufsize, &temp_allocator);
+    uint64_t num_quads = stb_easy_font_print(0.f, 0.f, text_cstr, NULL, buffer, bufsize);
+    uint64_t num_indices = num_quads * 6;
+    uint64_t indices_bufsize = num_indices * sizeof(uint32_t);
+    uint32_t *indices_buffer = alloc<uint32_t>(indices_bufsize, &temp_allocator);
     // jdk: fill a index buffer that draws as if it was GL_QUADS (deprecated opengl feature)
-    for(U64 i = 0; i < num_quads; ++i) {
-	U64 i_offset = 6 * i;
-	U64 val_offset = 4 * i;
+    for(uint64_t i = 0; i < num_quads; ++i) {
+	uint64_t i_offset = 6 * i;
+	uint64_t val_offset = 4 * i;
 	indices_buffer[i_offset + 0] = 0 + val_offset;
 	indices_buffer[i_offset + 1] = 1 + val_offset;
 	indices_buffer[i_offset + 2] = 2 + val_offset;
@@ -25,7 +25,7 @@ TextObject *new_text_object(Str8 text) {
 	indices_buffer[i_offset + 5] = 3 + val_offset;
     }
 
-    U32 vbo, ebo, vao;
+    uint32_t vbo, ebo, vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
@@ -37,7 +37,7 @@ TextObject *new_text_object(Str8 text) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_bufsize, indices_buffer, GL_STATIC_DRAW);
 
-    U64 stride = 3 * sizeof(F32) + 4 * sizeof(U8);
+    uint64_t stride = 3 * sizeof(float) + 4 * sizeof(uint8_t);
     const void *offset_position = (const void *)NULL;
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, offset_position);
     glEnableVertexAttribArray(0);
@@ -62,17 +62,17 @@ void delete_text_object(TextObject *obj) {
 	glDeleteBuffers(1, &obj->vbo);
 	glDeleteBuffers(1, &obj->ebo);
 	glDeleteVertexArrays(1, &obj->vao);
-	mem_free(obj);
+	release(obj);
     }
 }
 
 // jdk: offsets are in pixels
 void draw_textbox_no_background(const TextObject *text,
-				Vec3 color, F32 font_scale,
-				U64 offset_x, U64 offset_y,
-				U64 window_width, U64 window_height) {
+				Vec3 color, float font_scale,
+				uint64_t offset_x, uint64_t offset_y,
+				uint64_t window_width, uint64_t window_height) {
     if(!shader_info) {
-	TextShaderInfo *p = mem_alloc<TextShaderInfo>();
+	TextShaderInfo *p = alloc<TextShaderInfo>();
 	p->program = create_shader_vf("./src/shaders/text_vs.glsl",
 		"./src/shaders/text_fs.glsl");
 	p->location_fg_color    = glGetUniformLocation(p->program, "fg_color");
@@ -87,7 +87,7 @@ void draw_textbox_no_background(const TextObject *text,
     glUniform3fv(shader_info->location_fg_color, 1, color.v);
     glUniform1f (shader_info->location_font_scale, font_scale);
     glUniform2f (shader_info->location_upper_left, offset_x, offset_y);
-    glUniform2f (shader_info->location_window_size, (F32)window_width, (F32)window_height);
+    glUniform2f (shader_info->location_window_size, (float)window_width, (float)window_height);
     glDrawElements(GL_TRIANGLES, text->num_indices, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
     glUseProgram(0);
