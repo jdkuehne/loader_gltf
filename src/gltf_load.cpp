@@ -7,6 +7,16 @@ static bool bin_data_file_has_path(GLTFBin *x, Str8 path) { return str8_equal(x-
 static bool match_anim(AnimMeta *x, Str8 anim_name) { return str8_equal(x->name, anim_name); }
 static bool match_channel(ChannelMeta *x, cgltf_animation_path_type key) { return x->target == key; }
 
+// jdk: unused
+template<typename ElemT, typename CompT>
+ElemT *arr_find(ElemT *arr, size_t size, bool (*comp_fn)(ElemT *, CompT), CompT comp_val) {
+    for(size_t i = 0; i < size; ++i) {
+	if(comp_fn(&arr[i], comp_val)) {
+	    return &arr[i];
+	}
+    }
+}
+
 static uint64_t cgltf_component_type_size(cgltf_component_type x) {
     struct { cgltf_component_type type; uint64_t size; } static const map[] = {
 	{cgltf_component_type_r_8, sizeof(int8_t)}, {cgltf_component_type_r_8u, sizeof(uint8_t)},
@@ -533,10 +543,6 @@ static void gltf_draw_node(GLTFModel *model, Mat4 base_matrix, cgltf_node *node)
 	Mat4 final_matrix = mat4_mul(base_matrix, node_meta->world_matrix);
 	glUniformMatrix4fv(main_shader.location_world, 1, GL_FALSE, (float *)&final_matrix);
 	glUniform1i(main_shader.location_has_skin, node_meta->has_skin);
-	// jdk: color
-	// glUseProgram(main_shader.id);
-	// uint32_t color_location = glGetUniformLocation(main_shader.id, "color");
-	// glUniform3f(color_location, 0.5, 0.3, 0.15);
 	// jdk: morph targets
 	uint32_t morph_location = glGetUniformLocation(main_shader.id, "morph_weights");
 	glUniform1fv(morph_location, node_meta->morph_weights.len, node_meta->morph_weights.ptr);

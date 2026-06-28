@@ -16,11 +16,9 @@ struct MainShader {
     uint32_t location_world;
     uint32_t location_joint_matrices;
     uint32_t location_has_skin;
-
     // jdk: fragment shader
     uint32_t location_camera_position;
-};
-inline MainShader main_shader = {};
+} inline main_shader = {};
 
 uint32_t create_shader_vf(const char *vs_path, const char *fs_path);
 uint32_t create_shader_vgf(const char *vs_path, const char *gs_path, const char *fs_path);

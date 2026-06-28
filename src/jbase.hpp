@@ -57,8 +57,8 @@
 #define jm_rad32(deg) ((deg) * JM_PI32/180.0f)
 #define jm_rad64(deg) ((deg) * JM_PI64/180.0)
 
-#define jm_kib(x) 1024 * (x)
-#define jm_mib(x) 1024 * 1024 * (x)
+#define jm_kib(x) (1024 * (x))
+#define jm_mib(x) (1024 * 1024 * (x))
 
 //##################################################
 // jdk: alignment, pow2 checks

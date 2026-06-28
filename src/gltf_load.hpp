@@ -29,9 +29,6 @@ struct PrimMeta {
     uint32_t morph_attribute_textures[JK_NUM_MORPH_ATTRIBS];
 };
 
-// NOTE(jdk): Channel and AnimMeta are linked lists because there's no proper way to know
-// how big the allocation should be, so being flexible with the list's size makes sense.
-
 struct ChannelMeta {
     cgltf_animation_path_type target;
     cgltf_interpolation_type interpolation;
