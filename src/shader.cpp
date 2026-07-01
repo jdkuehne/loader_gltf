@@ -91,21 +91,55 @@ void delete_shader(uint32_t program) {
     glDeleteProgram(program);
 }
 
+static OptionalSampler2DLocations get_opt_sampler2d_locations(uint32_t program,
+	const char *struct_name) {
+    return {
+	glGetUniformLocation(program, cstr_cat(struct_name, ".has_texture", &temp_allocator));
+ 	glGetUniformLocation(program, cstr_cat(struct_name, ".sampler", &temp_allocator));
+    };
+}
 void setup_main_shader() {
-    main_shader.id = create_shader_vf(JK_MAIN_VS_PATH, JK_MAIN_FS_PATH);
-    main_shader.location_projection = glGetUniformLocation(main_shader.id, "proj");
-    main_shader.location_view = glGetUniformLocation(main_shader.id, "view");
-    main_shader.location_world = glGetUniformLocation(main_shader.id, "world");
-    main_shader.location_joint_matrices = glGetUniformLocation(main_shader.id, "joint_matrices");
-    main_shader.location_has_skin = glGetUniformLocation(main_shader.id, "has_skin");
-    main_shader.location_camera_position = glGetUniformLocation(main_shader.id, "camera_pos");
+    MainShader &ms = main_shader;
+    const auto &get_loc = glGetUniformLocation;
+    ms.id = create_shader_vf(JK_MAIN_VS_PATH, JK_MAIN_FS_PATH);
+    ms.location_projection             = get_loc(ms.id, "projection");
+    ms.location_view                   = get_loc(ms.id, "view");
+    ms.location_world                  = get_loc(ms.id, "world");
+    ms.location_has_skin               = get_loc(ms.id, "has_skin");
+    ms.location_joint_matrices         = get_loc(ms.id, "joint_matrices");
+
+    ms.locations_morph_attrib_pos       = get_opt_sampler2d_locations(ms.id, "morph_attrib_pos");
+    ms.locations_morph_attrib_norm      = get_opt_sampler2d_locations(ms.id, "morph_attrib_norm");
+    ms.locations_morph_attrib_tangent   = get_opt_sampler2d_locations(ms.id, "morph_attrib_tangent");
+    ms.locations_morph_attrib_texcoord0 = get_opt_sampler2d_locations(ms.id, "morph_attrib_texcoord0");
+    ms.location_morph_weights          = get_loc(ms.id, "morph_weigths");
+
+    ms.location_camera_pos             = get_loc(ms.id, "camera_pos");
+    ms.location_metallic_factor        = get_loc(ms.id, "metallic_factor");
+    ms.location_roughness_factor       = get_loc(ms.id, "roughness_factor");
+    ms.location_metallic_roughness_texture = get_loc(ms.id, "metallic_roughness_texture");
+    ms.location_albedo_factor          = get_loc(ms.id, "albedo_factor");
+    ms.location_albedo_texture         = get_loc(ms.id, "albedo_texture");
+}
+
+// jdk: those don't change and are important so a picture doesn't get used in a morph target or
+// something
+void main_shader_setup_texture_sampler_indices() {
+    glUseProgram(main_shader.id);
+    glUniform1i(main_shader.location_albedo_texture, 0);
+    glUniform1i(main_shader.location_metallic_roughness_texture, 1);
+    glUniform1i(main_shader.location_morph_attrib_pos, 5);
+    glUniform1i(main_shader.location_morph_attrib_norm, 6);
+    glUniform1i(main_shader.location_morph_attrib_tangent, 7);
+    glUniform1i(main_shader.location_morph_attrib_texcoord0, 8);
+    glUseProgram(0);
 }
 
 void main_shader_set_view_and_camera(Camera *camera) {
     Mat4 view = camera_look_at(camera);
     glUseProgram(main_shader.id);
     glUniformMatrix4fv(main_shader.location_view, 1, GL_FALSE, (float *)&view);
-    glUniform3fv(main_shader.location_camera_position, 1, (float *)&camera->pos);
+    glUniform3fv(main_shader.location_camera_pos, 1, (float *)&camera->pos);
     glUseProgram(0);
 }
 

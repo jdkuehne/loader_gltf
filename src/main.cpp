@@ -1,4 +1,3 @@
-// @TAG(jdk): the code
 #include "jbase.hpp"
 #include "jmath.hpp"
 
@@ -23,8 +22,8 @@
 #define JK_DUMP_PERSISTENT_ALLOC 0
 #define JK_PRINT_ALLOCATOR_STATE 0
 
-#define JK_FILE_NAME "MaterialTest.gltf"
-#define JK_ANIM_NAME "anim_0"
+#define JK_FILE_NAME "Material_Tex.gltf"
+#define JK_ANIM_NAME "anim0"
 
 #define JM_FONT_SCALE 2.f
 
@@ -66,7 +65,7 @@ int main() {
     Input input = {};
 
     setup_main_shader();
-    uint32_t dumb_loc = glGetUniformLocation(main_shader.id, "world");
+    main_shader_setup_texture_sampler_indices();
     main_shader_set_projection(jm_rad32(60.f), aspect_ratio, 0.1f, 100.f);
 
     TextObject *text1 = new_text_object(str8("GLTF animation test v0.1"));
@@ -98,7 +97,6 @@ int main() {
 	gltf_draw(model, mat4(1.f));
 	glUseProgram(0);
 
-
 	//##################################################
 	// jdk: text rendering
 	draw_textbox_no_background(text1, vec3_rgb8(180, 120, 80), JM_FONT_SCALE,
@@ -126,5 +124,7 @@ int main() {
 #include "ext/glad/gl.h"
 #define CGLTF_IMPLEMENTATION
 #include "ext/cgltf.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "ext/stb_image.h"
 #define JMATH_IMPLEMENTATION
 #include "jmath.hpp"

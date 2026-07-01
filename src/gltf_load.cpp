@@ -1,4 +1,5 @@
 #include "gltf_load.hpp"
+#include "ext/stb_image.h"
 
 // jdk: search conditions
 static bool match_prim(PrimMeta *x, cgltf_primitive *key) { return (x->key == key) ? true : false; }
@@ -240,10 +241,12 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 	    node_meta->has_skin = true;
 	    node_meta->skin_data = {
 		skin->joints,
-		alloc<Mat4>(skin->joints_count),
+		// @TODO(jdk): should this be a heap allocation?
+		// should all data of one model be inside one allocation?
+		zero_alloc<Mat4>(skin->joints_count),
 		skin->joints_count
 	    };
-	    // TODO(jdk): can multiple sets of inverse bind matrices share the same buffer view??
+	    // @TODO(jdk): can multiple sets of inverse bind matrices share the same buffer view??
 	    cgltf_buffer_view *ibm_view = skin->inverse_bind_matrices->buffer_view;
 	    Str8 ibm_data = get_view_bin_data(model_result, ibm_view, params->bin_dir);
 	    node_meta->inverse_bind_matrices = {
@@ -251,28 +254,42 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 		skin->inverse_bind_matrices->count
 	    };
 	}
-	// TODO(jdk): morph targets?
+
 	// jdk: setup primitives meta container
 	node_meta->primitives_meta = make_stack<PrimMeta>(mesh->primitives_count);
 	for(uint64_t iprim = 0; iprim < mesh->primitives_count; ++iprim) {
 	    cgltf_primitive *prim = &mesh->primitives[iprim];
-
 	    PrimMeta *prim_meta = stack_push(&node_meta->primitives_meta, {.key = prim});
-
 	    // jdk: material
 	    cgltf_material *material = prim->material;
 	    if(material->has_pbr_metallic_roughness) {
-		
+		prim_meta->metallic_roughness = &material->pbr_metallic_roughness;
+		cgltf_texture *tex = material->pbr_metallic_roughness.base_color_texture.texture;
+		if(tex) {
+		    cgltf_image *img = tex->image;
+		    int img_width = 0;
+		    int img_height = 0;
+		    int img_num_components = 0;
+		    uint8_t *img_data =
+			stbi_load(img->uri, &img_width, &img_height, &img_num_components, 0);
+		    GLenum format = pixel_format_from_num_components(img_num_components);
+		    uint32_t texture = 0;
+		    glGenTextures(1, &texture);
+		    glBindTexture(GL_TEXTURE_2D, texture);
+		    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img_width, img_height, 0, format,
+			    GL_UNSIGNED_BYTE, img_data);
+		    glGenerateMipmap(GL_TEXTURE_2D);
+		    glBindTexture(GL_TEXTURE_2D, 0);
+		    prim_meta->base_color_texture_id = texture;
+		}
 	    }
-
 	    // TODO(jdk): account for case 
 	    assert(prim->indices && "primitive doesn't have indices => all vertices, not handled yet");
-
-
 	    // jdk: vertex attributes setup
 	    glGenVertexArrays(1, &prim_meta->vao);
 	    glBindVertexArray(prim_meta->vao);
 
+	    // jdk: element buffer data
 	    glGenBuffers(1, &prim_meta->ebo);
 	    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_meta->ebo);
 	    cgltf_buffer_view *indices_view = prim->indices->buffer_view;
@@ -299,6 +316,7 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 		stack_push<cgltf_attribute *>(attrib_group, &prim->attributes[iattrib]);
 	    }
 
+	    // jdk: vertex attribute data
 	    glGenBuffers(1, &prim_meta->vbo);
 	    glBindBuffer(GL_ARRAY_BUFFER, prim_meta->vbo);
 	    // TODO(jdk): always static draw???
@@ -307,6 +325,7 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 	    for(uint64_t igroup = 0; igroup < view_attrib_groups.len; ++igroup) {
 		AttribGroup *group = &view_attrib_groups.buf[igroup];
 		if(group->len <= 0)
+		    // @TODO(jdk): is that what should be done here?
 		    break;
 		cgltf_buffer_view *view = group->buf[0]->data->buffer_view;
 		Str8 attrib_data = get_view_bin_data(model_result, view, params->bin_dir);
@@ -331,7 +350,10 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 		}
 		sub_data_offset += view->size;
 	    }
+
 	    glBindVertexArray(0);
+	    glBindBuffer(GL_ARRAY_BUFFER, 0);
+	    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	    // jdk: morph targets setup
 	    for(uint64_t itarget = 0; itarget < prim->targets_count; ++itarget) {
@@ -540,28 +562,43 @@ static void gltf_draw_node(GLTFModel *model, Mat4 base_matrix, cgltf_node *node)
 		glUniformMatrix4fv(location_joint_matrix, 1, GL_FALSE, (float *)&joint_matrix);
 	    }
 	}
+	glUniform1i(main_shader.location_has_skin, node_meta->has_skin);
+
+	// jdk: world
 	Mat4 final_matrix = mat4_mul(base_matrix, node_meta->world_matrix);
 	glUniformMatrix4fv(main_shader.location_world, 1, GL_FALSE, (float *)&final_matrix);
-	glUniform1i(main_shader.location_has_skin, node_meta->has_skin);
-	// jdk: morph targets
-	uint32_t morph_location = glGetUniformLocation(main_shader.id, "morph_weights");
-	glUniform1fv(morph_location, node_meta->morph_weights.len, node_meta->morph_weights.ptr);
+	// jdk: morph weights
+	glUniform1fv(main_shader.location_morph_weights, node_meta->morph_weights.len, node_meta->morph_weights.ptr);
+
 	for(uint64_t iprim = 0; iprim < mesh->primitives_count; ++iprim) {
 	    cgltf_primitive *prim = &mesh->primitives[iprim];
 	    PrimMeta *info = stack_find(&node_meta->primitives_meta, match_prim, prim);
+	    //jdk: material
+	    if(info->metallic_roughness) {
+		glUniform3fv(main_shader.location_albedo_factor, 1,
+			info->metallic_roughness->base_color_factor);
+		glUniform1f(main_shader.location_roughness_factor,
+			info->metallic_roughness->roughness_factor);
+		glUniform1f(main_shader.location_metallic_factor,
+			info->metallic_roughness->metallic_factor);
 
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, info->base_color_texture_id);
+		// glBindTexture(GL_TEXTURE_2D, info->base_color_texture_id);
+		// glActiveTexture(GL_TEXTURE1);
+
+	    }
+	    // jdk: morph attributes texture
 	    for(uint64_t imorph_attrib = 0; imorph_attrib < JK_NUM_MORPH_ATTRIBS; ++imorph_attrib) {
 		if(info->morph_attribute_textures[imorph_attrib] != 0) {
-		    Arena arena = make_arena(1024); // @TODO(jdk): get rid of this
-		    Str8 index_str = str8_cfmt({"%d"}, imorph_attrib);
-		    Str8 loc_str = str8_cat(str8("morph_texture"), index_str, &temp_allocator);
-		    uint32_t location = glGetUniformLocation(main_shader.id,
-			    cstr_from_str8(loc_str, &temp_allocator));
-
-		    glUniform1i(location, imorph_attrib);
-		    glActiveTexture(GL_TEXTURE0 + imorph_attrib);
+		    int imorph_texture = 5 + imorph_attrib;
+		    static int check = 0;
+		    if(check < 7) {
+			printf("morph tex index: %u\n", imorph_texture);
+			check++;
+		    }
+		    glActiveTexture(GL_TEXTURE0 + imorph_texture);
 		    glBindTexture(GL_TEXTURE_2D, info->morph_attribute_textures[imorph_attrib]);
-		    destroy_arena(&arena);
 		}
 	    }
 

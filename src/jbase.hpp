@@ -263,7 +263,10 @@ uint8_t str8_equal(Str8 lhs, Str8 rhs);
 Str8 str8_trim(Str8 str);
 Str8 str8_substr(Str8 str, size_t offset, size_t len);
 Str8 str8_copy(Str8 str, Allocator *allocator = &cstd_allocator);
-Str8 str8_cat(Str8 str1, Str8 str2, Allocator *allocator = &cstd_allocator);
+Str8 str8_cat(Str8 str_l, Str8 str_r, Allocator *allocator = &cstd_allocator);
+Str8 str8_cat(Str8 str_l, const char *str_r, Allocator *allocator = &cstd_allocator);
+Str8 str8_cat(const char *str_l, Str8 str_r, Allocator *allocator = &cstd_allocator);
+Str8 str8_cat(const char *str_l, const char *str_r, Allocator *allocator = &cstd_allocator);
 Str8 str8_dir_finish_with_slash(Str8 dir, Allocator *allocator = &cstd_allocator);
 
 // jdk: _a means explicit allocator => va args make default values impossible
@@ -439,6 +442,17 @@ char *cstr_from_str8(Str8 str, Allocator *allocator) {
     return cstr;
 }
 
+char *cstr_cat(const char *str_l, const char *str_r, Allocator *allocator = &cstd_allocator) {
+    size_t len_l = strlen(str_l);
+    size_t len_r = strlen(str_r);
+    size_t newlen = len_l + len_r;
+    char *result = alloc<char>(newlen, allocator);
+    memcpy(result, str_l, len_l);
+    memcpy(result + len_l, str_r, len_r);
+    result[newlen] = '\0';
+    return result;
+}
+
 Str8 str8(uint8_t *ptr, size_t len) {
     return {ptr, len};
 }
@@ -537,15 +551,33 @@ Str8 str8_copy(Str8 str, Allocator *allocator) {
     return result;
 }
 
-Str8 str8_cat(Str8 str1, Str8 str2, Allocator *allocator) {
-    Str8 result = str8_alloc_buffer(str1.len + str2.len, allocator);
-    memcpy(result.ptr, str1.ptr, str1.len);
-    memcpy(result.ptr + str1.len, str2.ptr, str2.len);
+Str8 str8_cat(Str8 str_l, Str8 str_r, Allocator *allocator) {
+    Str8 result = str8_alloc_buffer(str_l.len + str_r.len, allocator);
+    memcpy(result.ptr, str_l.ptr, str_l.len);
+    memcpy(result.ptr + str_l.len, str_r.ptr, str_r.len);
     return result;
 }
-
-Str8 str8_cat_cstrs(char *cstr1, char *cstr2, Allocator *allocator) {
-    return str8_cat(str8(cstr1), str8(cstr2), allocator);
+Str8 str8_cat(Str8 str_l, const char *str_r, Allocator *allocator) {
+    size_t len_r = strlen(str_r);
+    Str8 result = str8_alloc_buffer(str_l.len + len_r, allocator);
+    memcpy(result.ptr, str_l.ptr, str_l.len);
+    memcpy(result.ptr + str_l.len, str_r, len_r);
+    return result;
+}
+Str8 str8_cat(const char *str_l, Str8 str_r, Allocator *allocator) {
+    size_t len_l = strlen(str_l);
+    Str8 result = str8_alloc_buffer(len_l + str_r.len, allocator);
+    memcpy(result.ptr, str_l, len_l);
+    memcpy(result.ptr + len_l, str_r.ptr, str_r.len);
+    return result;
+}
+Str8 str8_cat(const char *str_l, const char *str_r, Allocator *allocator) {
+    size_t len_l = strlen(str_l);
+    size_t len_r = strlen(str_r);
+    Str8 result = str8_alloc_buffer(len_l + len_r, allocator);
+    memcpy(result.ptr, str_l, len_l);
+    memcpy(result.ptr + len_l, str_r, len_r);
+    return result;
 }
 
 Str8 str8_dir_finish_with_slash(Str8 dir, Allocator *allocator) {

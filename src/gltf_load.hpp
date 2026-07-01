@@ -18,7 +18,6 @@ struct AnimStep {
     float interpolation_factor;
 };
 
-
 struct PrimMeta {
     // jdk: this address is used as key to find corresponding data
     cgltf_primitive *key;
@@ -27,6 +26,8 @@ struct PrimMeta {
     GLenum indices_type;
     // jdk: one texture per attrib, second dimension are the other morph targets
     uint32_t morph_attribute_textures[JK_NUM_MORPH_ATTRIBS];
+    cgltf_pbr_metallic_roughness *metallic_roughness;
+    uint32_t base_color_texture_id;
 };
 
 struct ChannelMeta {
