@@ -91,17 +91,19 @@ static int get_attrib_location(Str8 attrib_name) {
     exit(JM_ERROR_UNKNOWN_PRIMITIVE_ATTRIB);
 }
 
-static int get_morph_attrib_location(Str8 attrib_name) {
-    struct { const char *name; int location; } static const map[] = {
-	{"POSITION", 0}, {"NORMAL", 1}, {"TANGENT", 2},
-	{"TEXCOORD_0", 3}, {"TEXCOORD_1", 4}, {"COLOR_0", 5}, {"COLOR_1", 6},
+static uint32_t *get_morph_attrib_texture_variable_ptr(PrimMeta *x, const char *name) {
+    struct {const char *name; uint32_t *p; } static const map[] = {
+	{"POSITION",   &x->morph_attrib_pos},
+	{"NORMAL",     &x->morph_attrib_norm},
+	{"TANGENT",    &x->morph_attrib_tangent},
+	{"TEXCOORD_0", &x->morph_attrib_texcoord0}
     };
-    for(uint64_t i = 0; i < jm_arrlen(map); ++i) {
-	if(str8_equal(attrib_name, str8(map[i].name))) {
-	    return map[i].location;
-	}
+    for(size_t i = 0; i < jm_arrlen(map); ++i) {
+	if(cstr_equal(name, map[i].name))
+	    return map[i].p;
     }
-    exit(JM_ERROR_UNKNOWN_PRIMITIVE_ATTRIB);
+    printf("morph target \"%s\", could not be assigned a texture variable, extend PrimMeta!", name);
+    return NULL;
 }
 
 // // @TODO(jdk): no handling for ./... vs ... paths
@@ -170,6 +172,7 @@ static int skin_joints_data_index_of_joint(SkinJointsData *skin_data, cgltf_node
 
 static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 	cgltf_data *data, cgltf_node *node, Mat4 parent_world_matrix);
+static void gltf_apply_joints(GLTFModel *model, cgltf_node *node);
 
 GLTFModel *gltf_load(GLTFLoadParams *params) {
     GLTFModel *result = zero_alloc<GLTFModel>();
@@ -180,10 +183,12 @@ GLTFModel *gltf_load(GLTFLoadParams *params) {
 	cgltf_parse_file(&params->options, cstr_from_str8(path, &temp_allocator), &data);
     assert(parse_result == cgltf_result_success);
     cgltf_scene *scene = data->scene;
-    for(uint64_t inode = 0; inode < scene->nodes_count; ++inode) {
-	cgltf_node *node = scene->nodes[inode];
-	gltf_load_node_meta(params, result, data, node, mat4(1.f));
-    }
+    auto nodes = make_slice<cgltf_node *>(scene->nodes, scene->nodes_count);
+    // @TODO(jdk): new sliceforeach, current is kinda confusing which is why i don't use it here 
+    for(size_t inode = 0; inode < nodes.len; ++inode)
+	gltf_load_node_meta(params, result, data, nodes.ptr[inode], mat4(1.f));
+    for(size_t inode = 0; inode < nodes.len; ++inode)
+	gltf_apply_joints(result, nodes.ptr[inode]);
     result->data = data;
     return result;
 }
@@ -262,7 +267,7 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 	    PrimMeta *prim_meta = stack_push(&node_meta->primitives_meta, {.key = prim});
 	    // jdk: material
 	    cgltf_material *material = prim->material;
-	    if(material->has_pbr_metallic_roughness) {
+	    if(material && material->has_pbr_metallic_roughness) {
 		prim_meta->metallic_roughness = &material->pbr_metallic_roughness;
 		cgltf_texture *tex = material->pbr_metallic_roughness.base_color_texture.texture;
 		if(tex) {
@@ -373,15 +378,16 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 		    Str8 mt_attrib_data =
 			get_view_bin_data(model_result, mt_attrib_view, params->bin_dir);
 		    uint64_t offset = mt_attrib_accessor->offset;
-		    uint64_t index = get_morph_attrib_location(str8(mt_attrib->name));
+		    uint32_t *texture_dest =
+			get_morph_attrib_texture_variable_ptr(prim_meta, mt_attrib->name);
 		    uint64_t count = mt_attrib_accessor->count;
-		    if(prim_meta->morph_attribute_textures[index] == 0) {
-			glGenTextures(1, &prim_meta->morph_attribute_textures[index]);
-			glBindTexture(GL_TEXTURE_2D, prim_meta->morph_attribute_textures[index]);
+		    if(*texture_dest == 0) {
+			glGenTextures(1, texture_dest);
+			glBindTexture(GL_TEXTURE_2D, *texture_dest);
 			glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, count, prim->targets_count);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		    }
-		    glBindTexture(GL_TEXTURE_2D, prim_meta->morph_attribute_textures[index]);
+		    glBindTexture(GL_TEXTURE_2D, *texture_dest);
 		    glTexSubImage2D(GL_TEXTURE_2D, 0 , 0, itarget, count, 1,
 			    cgltf_type_tex_format(mt_attrib_accessor->type),
 			    gl_enum_from_cgltf_component_type(mt_attrib_accessor->component_type),
@@ -403,13 +409,14 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 // @TAG jdk: apply animated node transforms to model
 
 static void gltf_apply_node_animations(GLTFModel *model, cgltf_node *node, Mat4 parent_world_matrix);
-static void gltf_apply_joints(GLTFModel *model, cgltf_node *node);
 
 void gltf_animate(GLTFModel *model) {
     cgltf_scene *scene = model->data->scene;
-    Slice<cgltf_node *> nodes = make_slice(scene->nodes, scene->nodes_count);
-    JK_SliceForeach(&nodes, node, { gltf_apply_node_animations(model, *node, mat4(1.f)); });
-    JK_SliceForeach(&nodes, node, { gltf_apply_joints(model, *node); });
+    auto nodes = make_slice<cgltf_node *>(scene->nodes, scene->nodes_count);
+    for(size_t inode = 0; inode < nodes.len; ++inode)
+	gltf_apply_node_animations(model, nodes.ptr[inode], mat4(1.f));
+    for(size_t inode = 0; inode < nodes.len; ++inode)
+	gltf_apply_joints(model, nodes.ptr[inode]);
 }
 
 static void gltf_apply_node_animations(GLTFModel *model, cgltf_node *node,
@@ -500,38 +507,23 @@ static void gltf_apply_node_animations(GLTFModel *model, cgltf_node *node,
 //##################################################
 // @TAG jdk: skeleton space matrices from calculated joint transforms
 
-static void gltf_apply_skeleton_joints(GLTFModel *model, cgltf_node *joint, NodeMeta *skin_meta,
-	Mat4 parent_skeleton_matrix);
+// @TODO(jdk): raname to jointworldmatrix or something
 
+// jdk: recursively calculate global joint matrices of node and children and add to skin nodes
 static void gltf_apply_joints(GLTFModel *model, cgltf_node *node) {
     cgltf_skin *skin = node->skin;
     if(skin) {
 	NodeMeta *skin_meta = list_find(&model->nodes_meta, match_node, node);
-	cgltf_node *skeleton = skin->skeleton;
-	for(uint64_t ichild = 0; ichild < skeleton->children_count; ++ichild) {
-	    gltf_apply_skeleton_joints(model, skeleton->children[ichild], skin_meta, mat4(1.f));
+	for(size_t ijoint = 0; ijoint < skin_meta->skin_data.len; ++ijoint) {
+	    cgltf_node *joint = skin->joints[ijoint];
+	    NodeMeta *joint_meta = list_find(&model->nodes_meta, match_node, joint);
+	    skin_meta->skin_data.skeleton_matrices[ijoint] = joint_meta->world_matrix;
 	}
     }
     for(uint64_t ichild = 0; ichild < node->children_count; ++ichild) {
 	gltf_apply_joints(model, node->children[ichild]);
     }
 }
-
-static void gltf_apply_skeleton_joints(GLTFModel *model, cgltf_node *joint, NodeMeta *skin_meta,
-	Mat4 parent_skeleton_matrix) {
-    int index = skin_joints_data_index_of_joint(&skin_meta->skin_data, joint);
-    if(index == JK_NODE_IS_NOT_SKIN_JOINT)
-	return;
-    NodeMeta *joint_meta = list_find(&model->nodes_meta, match_node, joint);
-    assert(joint_meta);
-    Mat4 skeleton_matrix = mat4_mul(parent_skeleton_matrix, joint_meta->matrix);
-    skin_meta->skin_data.skeleton_matrices[index] = skeleton_matrix;
-    for(uint64_t ichild = 0; ichild < joint->children_count; ++ichild) {
-	gltf_apply_skeleton_joints(model, joint->children[ichild], skin_meta, skeleton_matrix);
-    }
-}
-
-
 
 //#####################################################################################
 // @TAG jdk: main gltf drawing funcs
@@ -555,9 +547,9 @@ static void gltf_draw_node(GLTFModel *model, Mat4 base_matrix, cgltf_node *node)
 	if(skin) {
 	    for(uint64_t ijoint = 0; ijoint < node_meta->skin_data.len; ++ijoint) {
 		Mat4 joint_skeleton_matrix = node_meta->skin_data.skeleton_matrices[ijoint];
-		Mat4 bind_matrix = node_meta->inverse_bind_matrices.ptr[ijoint];
+		Mat4 inverse_bind_matrix = node_meta->inverse_bind_matrices.ptr[ijoint];
 		// TODO(jdk): account for doubles
-		Mat4 joint_matrix = mat4_mul(joint_skeleton_matrix, bind_matrix);
+		Mat4 joint_matrix = mat4_mul(joint_skeleton_matrix, inverse_bind_matrix);
 		uint32_t location_joint_matrix = main_shader.location_joint_matrices + ijoint;
 		glUniformMatrix4fv(location_joint_matrix, 1, GL_FALSE, (float *)&joint_matrix);
 	    }
@@ -582,25 +574,30 @@ static void gltf_draw_node(GLTFModel *model, Mat4 base_matrix, cgltf_node *node)
 		glUniform1f(main_shader.location_metallic_factor,
 			info->metallic_roughness->metallic_factor);
 
-		glActiveTexture(GL_TEXTURE2);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, info->base_color_texture_id);
-		// glBindTexture(GL_TEXTURE_2D, info->base_color_texture_id);
+		glUniform1i(main_shader.locations_albedo_texture.has_texture, info->base_color_texture_id != 0);
 		// glActiveTexture(GL_TEXTURE1);
+		// glBindTexture(GL_TEXTURE_2D, info->base_color_texture_id);
 
 	    }
-	    // jdk: morph attributes texture
-	    for(uint64_t imorph_attrib = 0; imorph_attrib < JK_NUM_MORPH_ATTRIBS; ++imorph_attrib) {
-		if(info->morph_attribute_textures[imorph_attrib] != 0) {
-		    int imorph_texture = 5 + imorph_attrib;
-		    static int check = 0;
-		    if(check < 7) {
-			printf("morph tex index: %u\n", imorph_texture);
-			check++;
-		    }
-		    glActiveTexture(GL_TEXTURE0 + imorph_texture);
-		    glBindTexture(GL_TEXTURE_2D, info->morph_attribute_textures[imorph_attrib]);
-		}
-	    }
+
+	    // jm_trap();
+	    glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_POS);
+	    glBindTexture(GL_TEXTURE_2D, info->morph_attrib_pos);
+	    glUniform1i(main_shader.locations_morph_attrib_pos.has_texture, info->morph_attrib_pos != 0);
+	    
+	    glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_NORM);
+	    glBindTexture(GL_TEXTURE_2D, info->morph_attrib_norm);
+	    glUniform1i(main_shader.locations_morph_attrib_norm.has_texture, info->morph_attrib_norm != 0);
+
+	    glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_TANGENT);
+	    glBindTexture(GL_TEXTURE_2D, info->morph_attrib_tangent);
+	    glUniform1i(main_shader.locations_morph_attrib_tangent.has_texture, info->morph_attrib_tangent != 0);
+
+	    glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_TEXCOORD0);
+	    glBindTexture(GL_TEXTURE_2D, info->morph_attrib_texcoord0);
+	    glUniform1i(main_shader.locations_morph_attrib_texcoord0.has_texture, info->morph_attrib_texcoord0 != 0);
 
 	    glBindVertexArray(info->vao);
 	    glDrawElements(GL_TRIANGLES, info->indices_count, info->indices_type, NULL);

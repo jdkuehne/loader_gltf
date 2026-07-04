@@ -165,11 +165,11 @@ inline void arena_free_wrapper(void *arena, void *allocation) {
     return arena_free((Arena *)arena, allocation);
 }
 
-inline uint8_t *cstd_malloc_wrapper(void *data, size_t size, size_t alignment) {
+inline uint8_t *cstd_malloc_wrapper(void */*data*/, size_t size, size_t /*alignment*/) {
     return (uint8_t *)malloc(size);
 }
 
-inline void cstd_free_wrapper(void *data, void *memory) {
+inline void cstd_free_wrapper(void */*data*/, void *memory) {
     return free(memory);
 }
 
@@ -245,6 +245,8 @@ bool char_is_bslash(uint8_t c);
 size_t cstr_length(const char *cstr);
 char *cstr_alloc_buffer(size_t len, Allocator *allocator = &cstd_allocator);
 char *cstr_from_str8(Str8 str, Allocator *allocator = &cstd_allocator);
+char *cstr_cat(const char *str_l, const char *str_r, Allocator *allocator = &cstd_allocator);
+bool cstr_equal(const char *x, const char *y);
 
 Str8 str8(uint8_t *ptr, size_t len);
 Str8 str8(const char *cstr);
@@ -370,7 +372,7 @@ uint8_t *arena_alloc(Arena *arena, size_t size, size_t alignment) {
     return result;
 }
 
-void arena_free(Arena *arena, void *allocation) {
+void arena_free(Arena */*arena*/, void */*allocation*/) {
     // jdk: don't do shit
 }
 
@@ -442,7 +444,7 @@ char *cstr_from_str8(Str8 str, Allocator *allocator) {
     return cstr;
 }
 
-char *cstr_cat(const char *str_l, const char *str_r, Allocator *allocator = &cstd_allocator) {
+char *cstr_cat(const char *str_l, const char *str_r, Allocator *allocator) {
     size_t len_l = strlen(str_l);
     size_t len_r = strlen(str_r);
     size_t newlen = len_l + len_r;
@@ -451,6 +453,19 @@ char *cstr_cat(const char *str_l, const char *str_r, Allocator *allocator = &cst
     memcpy(result + len_l, str_r, len_r);
     result[newlen] = '\0';
     return result;
+}
+
+bool cstr_equal(const char *x, const char *y) {
+    size_t len_x = strlen(x);
+    if(len_x != strlen(y)) {
+	return false;
+    }
+    for(size_t i = 0; i < len_x; ++i) {
+	if(x[i] != y[i]) {
+	    return false;
+	}
+    }
+    return true;
 }
 
 Str8 str8(uint8_t *ptr, size_t len) {
@@ -675,8 +690,9 @@ size_t file_read(FileDescriptor fd, void *buffer, size_t count) {
 	printf("64bit linux read has undefined behaviour for reads greater than I64_MAX");
 	exit(JM_ERROR_FILEREAD);
     }
+    // @TODO(jdk): techincally windows also only does read up to U32_MAX
     DWORD bytes_read = 0;
-    if(ReadFile(fd, buffer, count, &bytes_read, NULL) == FALSE) {
+    if(ReadFile(fd, buffer, (DWORD)count, &bytes_read, NULL) == FALSE) {
 	exit(JM_ERROR_FILEREAD);
     }
     // @TODO(jdk): make this explicit that readfile reads max 2^32 bytes

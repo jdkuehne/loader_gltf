@@ -1,5 +1,10 @@
 #version 430 core
 
+struct OptionalSampler2D {
+    bool has_texture;
+    sampler2D sampler;
+};
+
 out vec4 frag_color;
 
 in vec3 frag_pos;
@@ -9,10 +14,10 @@ in vec2 frag_texcoord;
 uniform vec3 camera_pos;
 
 uniform vec3 albedo_factor = vec3(0.6);
-uniform sampler2D albedo_texture;
+uniform OptionalSampler2D albedo_texture;
 uniform float roughness_factor = 0.5;
 uniform float metallic_factor = 0.5;
-uniform sampler2D metallic_roughness_texture;
+uniform OptionalSampler2D metallic_roughness_texture;
 
 
 #define jm_pow2(x) ((x) * (x))
@@ -22,14 +27,14 @@ uniform sampler2D metallic_roughness_texture;
 void main() {
     float metallic = metallic_factor;
     float roughness = roughness_factor;
-    vec3 albedo = texture(albedo_texture, frag_texcoord).rgb * albedo_factor;
+    vec3 albedo = (albedo_texture.has_texture ? texture(albedo_texture.sampler, frag_texcoord).rgb : vec3(1.0)) * albedo_factor;
     // vec3 albedo = vec3(0.0);
     const float pi = 3.14159;
     const float pi_half = pi/2.0;
     const float one_over_pi = 1.0/pi;
 
     const vec3 light_pos = vec3(-2.0, 2.0, 4.0);
-    const vec3 light_color = vec3(10.0);
+    const vec3 light_color = vec3(20.0);
 
     vec3 n = frag_norm;
     vec3 l = normalize(light_pos - frag_pos);

@@ -448,7 +448,7 @@ Mat4 make_mat4_rotate(float theta, Vec3 axis) {
 // TODO(jdk): find a way to do this without angle axis?
 Mat4 make_mat4_rotate_quat(Quat q) {
     float angle = 0;
-    Vec3 axis = {0};
+    Vec3 axis = {};
     quat_fill_axis_angle(q, &axis, &angle);
     return make_mat4_rotate(angle, axis);
 }

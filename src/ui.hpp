@@ -14,12 +14,12 @@ typedef struct TextObject {
 } TextObject;
 
 typedef struct TextShaderInfo {
-    uint32_t program;
+    GLuint program;
 
-    uint32_t location_window_size;
-    uint32_t location_fg_color;
-    uint32_t location_upper_left;
-    uint32_t location_font_scale;
+    GLint location_window_size;
+    GLint location_fg_color;
+    GLint location_upper_left;
+    GLint location_font_scale;
 } TextShaderInfo;
 
 TextObject *new_text_object(Str8 text);

@@ -248,7 +248,7 @@
           0.6038274,
           1.0
         ],
-        "metallicFactor": 0.0,
+        "metallicFactor": 0.9,
         "roughnessFactor": 0.5
       },
       "name": "Material"

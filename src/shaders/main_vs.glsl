@@ -8,7 +8,7 @@ layout (location = 3) in vec2 attrib_texcoord0;
 layout (location = 7) in uvec4 attrib_joints;
 layout (location = 9) in vec4 attrib_weights;
 
-struct OptionalSampler2D {
+layout(std140) struct OptionalSampler2D {
     bool has_texture;
     sampler2D sampler;
 };
@@ -40,16 +40,15 @@ vec4 morph_from_texture(OptionalSampler2D morph_attrib) {
 	    value += morph_weights[i] * texelFetch(morph_attrib.sampler, ivec2(gl_VertexID, i), 0);
 	}
     }
-    return vec4(0.0);
+    return value;
 }
 
 void main() {
-    mat4 skin_mat = !has_skin ? mat4(1.0) :
+    mat4 animated_world = !has_skin ? world :
 	attrib_weights.x * joint_matrices[attrib_joints.x] +
 	attrib_weights.y * joint_matrices[attrib_joints.y] +
 	attrib_weights.z * joint_matrices[attrib_joints.z] +
 	attrib_weights.w * joint_matrices[attrib_joints.w];
-    mat4 animated_world = world * skin_mat;
 
     vec3 pos = attrib_pos + morph_from_texture(morph_attrib_pos).rgb;
     vec3 norm = attrib_norm + morph_from_texture(morph_attrib_norm).rgb;
@@ -58,6 +57,6 @@ void main() {
 
     frag_norm = normalize(transpose(inverse(mat3(animated_world))) * norm);
     frag_pos = (animated_world * vec4(pos, 1.0)).xyz;
-    frag_texcoord = attrib_texcoord0;
+    frag_texcoord = texcoord0;
     gl_Position = projection * view * animated_world * vec4(pos, 1.0);
 }

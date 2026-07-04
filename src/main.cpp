@@ -22,8 +22,9 @@
 #define JK_DUMP_PERSISTENT_ALLOC 0
 #define JK_PRINT_ALLOCATOR_STATE 0
 
+// #define JK_FILE_NAME "Material_Tex.gltf"
 #define JK_FILE_NAME "Material_Tex.gltf"
-#define JK_ANIM_NAME "anim0"
+#define JK_ANIM_NAME "Square"
 
 #define JM_FONT_SCALE 2.f
 
@@ -42,8 +43,8 @@ inline void set_clear_color_rgb8(uint8_t r, uint8_t g, uint8_t b) {
 
 void draw_fps_counter(double delta_time) {
     Vec3 color = vec3_rgb8(50, 100, 220);
-    constexpr float period = 1.f;
-    static float last_time = 0.f;
+    constexpr double period = 1.f;
+    static double last_time = 0.f;
     static TextObject *text_obj = NULL;
     if(!text_obj || glfwGetTime() - period > last_time) {
 	// TODO(jdk): make proper average, 1% low and stuff..
@@ -54,7 +55,7 @@ void draw_fps_counter(double delta_time) {
 	last_time = glfwGetTime();
     }
     draw_textbox_no_background(text_obj, color, JM_FONT_SCALE,
-			       window_width - (text_obj->w * JM_FONT_SCALE + 20), 20, window_width, window_height);
+			       (uint64_t)(window_width - (text_obj->w * JM_FONT_SCALE + 20)), 20, window_width, window_height);
 }
 
 int main() {
@@ -84,8 +85,8 @@ int main() {
 
 	// jdk: input, camera, shader update
 	process_window_input(window, &input);
-	camera_fps_move(&game.camera, vec3_scale(input.sphere, game.delta_time));
-	camera_fps_turn(&game.camera, vec2_scale(input.hjkl_n, game.delta_time));
+	camera_fps_move(&game.camera, vec3_scale(input.sphere, (float)(game.delta_time * 2.0)));
+	camera_fps_turn(&game.camera, vec2_scale(input.hjkl_n, (float)game.delta_time));
 	main_shader_set_view_and_camera(&game.camera);
 
 	// @TODO(jdk): test quat after switching layout
@@ -94,7 +95,7 @@ int main() {
 	model->anim.time_ms = game_time_ms_u64();
 	model->anim.name_current = str8(JK_ANIM_NAME);
 	gltf_animate(model);
-	gltf_draw(model, mat4(1.f));
+	gltf_draw(model, mat4(1.0));
 	glUseProgram(0);
 
 	//##################################################
@@ -123,7 +124,12 @@ int main() {
 #define GLAD_GL_IMPLEMENTATION
 #include "ext/glad/gl.h"
 #define CGLTF_IMPLEMENTATION
+// jdk: avoid unsafe libc function warning,
+// because i mean fuck that shit, cgltf definitely used those correctly
+// @TODO(jdk): case of gcc????
+ #pragma warning(disable:4996)
 #include "ext/cgltf.h"
+ #pragma warning(default:4996)
 #define STB_IMAGE_IMPLEMENTATION
 #include "ext/stb_image.h"
 #define JMATH_IMPLEMENTATION

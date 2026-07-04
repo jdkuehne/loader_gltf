@@ -9,8 +9,6 @@
 #include "ext/cgltf.h"
 #include "ext/glad/gl.h"
 
-#define JK_NUM_MORPH_ATTRIBS 7
-
 using AttribGroup = Stack<cgltf_attribute *>;
 
 struct AnimStep {
@@ -25,9 +23,11 @@ struct PrimMeta {
     uint64_t indices_count;
     GLenum indices_type;
     // jdk: one texture per attrib, second dimension are the other morph targets
-    uint32_t morph_attribute_textures[JK_NUM_MORPH_ATTRIBS];
+    // uint32_t morph_attribute_textures[JK_NUM_MORPH_ATTRIBS];
     cgltf_pbr_metallic_roughness *metallic_roughness;
     uint32_t base_color_texture_id;
+    // jdk: morph attrib data texture handles
+    uint32_t morph_attrib_pos, morph_attrib_norm, morph_attrib_tangent, morph_attrib_texcoord0;
 };
 
 struct ChannelMeta {

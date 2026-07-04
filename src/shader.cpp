@@ -65,7 +65,7 @@ uint32_t create_shader_vgf(const char *vs_path, const char *gs_path, const char 
 
     compile_err = compile_shader_file(GL_FRAGMENT_SHADER, fs_path, &fs);
     if(compile_err) exit(JM_ERROR_SHADERCOMPILE_FS);
-    
+
     //shader linking
     int link_success;
     uint32_t program = glCreateProgram();
@@ -91,16 +91,23 @@ void delete_shader(uint32_t program) {
     glDeleteProgram(program);
 }
 
+static GLint get_loc(GLuint id, const char *name) {
+    GLint result = glGetUniformLocation(id, name);
+    if(result == -1) {
+	printf("could not find uniform: %s\n", name);
+    }
+    return result;
+}
+
 static OptionalSampler2DLocations get_opt_sampler2d_locations(uint32_t program,
 	const char *struct_name) {
     return {
-	glGetUniformLocation(program, cstr_cat(struct_name, ".has_texture", &temp_allocator));
- 	glGetUniformLocation(program, cstr_cat(struct_name, ".sampler", &temp_allocator));
+	get_loc(program, cstr_cat(struct_name, ".has_texture", &temp_allocator)),
+ 	get_loc(program, cstr_cat(struct_name, ".sampler", &temp_allocator))
     };
 }
 void setup_main_shader() {
     MainShader &ms = main_shader;
-    const auto &get_loc = glGetUniformLocation;
     ms.id = create_shader_vf(JK_MAIN_VS_PATH, JK_MAIN_FS_PATH);
     ms.location_projection             = get_loc(ms.id, "projection");
     ms.location_view                   = get_loc(ms.id, "view");
@@ -112,26 +119,26 @@ void setup_main_shader() {
     ms.locations_morph_attrib_norm      = get_opt_sampler2d_locations(ms.id, "morph_attrib_norm");
     ms.locations_morph_attrib_tangent   = get_opt_sampler2d_locations(ms.id, "morph_attrib_tangent");
     ms.locations_morph_attrib_texcoord0 = get_opt_sampler2d_locations(ms.id, "morph_attrib_texcoord0");
-    ms.location_morph_weights          = get_loc(ms.id, "morph_weigths");
+    ms.location_morph_weights          = get_loc(ms.id, "morph_weights");
 
     ms.location_camera_pos             = get_loc(ms.id, "camera_pos");
     ms.location_metallic_factor        = get_loc(ms.id, "metallic_factor");
     ms.location_roughness_factor       = get_loc(ms.id, "roughness_factor");
-    ms.location_metallic_roughness_texture = get_loc(ms.id, "metallic_roughness_texture");
+    ms.locations_metallic_roughness_texture = get_opt_sampler2d_locations(ms.id, "metallic_roughness_texture");
     ms.location_albedo_factor          = get_loc(ms.id, "albedo_factor");
-    ms.location_albedo_texture         = get_loc(ms.id, "albedo_texture");
+    ms.locations_albedo_texture         = get_opt_sampler2d_locations(ms.id, "albedo_texture");
 }
 
 // jdk: those don't change and are important so a picture doesn't get used in a morph target or
 // something
 void main_shader_setup_texture_sampler_indices() {
     glUseProgram(main_shader.id);
-    glUniform1i(main_shader.location_albedo_texture, 0);
-    glUniform1i(main_shader.location_metallic_roughness_texture, 1);
-    glUniform1i(main_shader.location_morph_attrib_pos, 5);
-    glUniform1i(main_shader.location_morph_attrib_norm, 6);
-    glUniform1i(main_shader.location_morph_attrib_tangent, 7);
-    glUniform1i(main_shader.location_morph_attrib_texcoord0, 8);
+    glUniform1i(main_shader.locations_albedo_texture.sampler,             JM_ITEX_ALBEDO);
+    glUniform1i(main_shader.locations_metallic_roughness_texture.sampler, JM_ITEX_METALLIC_ROUGH);
+    glUniform1i(main_shader.locations_morph_attrib_pos.sampler,           JM_ITEX_MORPH_POS);
+    glUniform1i(main_shader.locations_morph_attrib_norm.sampler,          JM_ITEX_MORPH_NORM);
+    glUniform1i(main_shader.locations_morph_attrib_tangent.sampler,       JM_ITEX_MORPH_TANGENT);
+    glUniform1i(main_shader.locations_morph_attrib_texcoord0.sampler,     JM_ITEX_MORPH_TEXCOORD0);
     glUseProgram(0);
 }
 

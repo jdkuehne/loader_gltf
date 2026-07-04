@@ -5,43 +5,54 @@
 #include "camera.hpp"
 #include "ext/glad/gl.h"
 
-#define JM_BASE_TEX_INDEX_MORPH 5
-#define JM_TEX_INDEX_ALBEDO 0
-#define JM_TEX_INDEX_METALLIC_ROUGHNESS 1
+#define JM_ITEX_ALBEDO 0
+#define JM_ITEX_METALLIC_ROUGH 1
+#define JM_ITEX_MORPH_POS 5
+#define JM_ITEX_MORPH_NORM 6
+#define JM_ITEX_MORPH_TANGENT 7
+#define JM_ITEX_MORPH_TEXCOORD0 8
+
 #define JK_MAIN_VS_PATH "./src/shaders/main_vs.glsl"
 #define JK_MAIN_FS_PATH "./src/shaders/main_fs.glsl"
 
 struct OptionalSampler2DLocations {
-    uint32_t has_texture;
-    uint32_t sampler;
+    GLint has_texture;
+    GLint sampler;
 };
 
 struct MainShader {
-    uint32_t id;
+    GLuint id;
     // jdk: vertex shader
-    uint32_t location_projection;
-    uint32_t location_view;
-    uint32_t location_world;
+    GLint location_projection;
+    GLint location_view;
+    GLint location_world;
 
-    uint32_t location_has_skin;
-    uint32_t location_joint_matrices;
+    GLint location_has_skin;
+    GLint location_joint_matrices;
 
     OptionalSampler2DLocations locations_morph_attrib_pos;
     OptionalSampler2DLocations locations_morph_attrib_norm;
     OptionalSampler2DLocations locations_morph_attrib_tangent;
     OptionalSampler2DLocations locations_morph_attrib_texcoord0;
-    uint32_t location_morph_weights;
+    GLint location_morph_weights;
 
     // jdk: fragment shader
-    uint32_t location_camera_pos;
+    GLint location_camera_pos;
 
-    uint32_t location_metallic_factor;
-    uint32_t location_roughness_factor;
-    uint32_t location_metallic_roughness_texture;
-    uint32_t location_albedo_factor;
-    uint32_t location_albedo_texture;
+    GLint location_albedo_factor;
+    GLint location_metallic_factor;
+    GLint location_roughness_factor;
+
+    OptionalSampler2DLocations locations_albedo_texture;
+    OptionalSampler2DLocations locations_metallic_roughness_texture;
 
 } inline main_shader = {};
+
+/*
+struct ColorMappingShader {
+
+} inline color_mapping_shader = {};
+*/
 
 uint32_t create_shader_vf(const char *vs_path, const char *fs_path);
 uint32_t create_shader_vgf(const char *vs_path, const char *gs_path, const char *fs_path);

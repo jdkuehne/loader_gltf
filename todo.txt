@@ -1,0 +1,5 @@
+- add metallic roughness textures
+- procedural textures
+- exposure mapping, srgb mapping
+- shadow mapping, cascaded shadow mapping?
+- multiple lights
