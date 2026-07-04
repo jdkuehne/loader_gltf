@@ -1,5 +1,10 @@
 @echo off
 
+if not exist ".\bin\" (
+    mkdir bin
+    copy /y .\lib\glfw3.dll .\bin\
+)
+
 cd bin
 
 cl /c /nologo /EHsc /W4 /Zi /std:c++20 ../src/main.cpp

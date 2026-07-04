@@ -8,7 +8,7 @@ layout (location = 3) in vec2 attrib_texcoord0;
 layout (location = 7) in uvec4 attrib_joints;
 layout (location = 9) in vec4 attrib_weights;
 
-layout(std140) struct OptionalSampler2D {
+struct OptionalSampler2D {
     bool has_texture;
     sampler2D sampler;
 };
