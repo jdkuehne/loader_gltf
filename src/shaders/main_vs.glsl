@@ -8,36 +8,50 @@ layout (location = 3) in vec2 attrib_texcoord0;
 layout (location = 7) in uvec4 attrib_joints;
 layout (location = 9) in vec4 attrib_weights;
 
-struct OptionalSampler2D {
-    bool has_texture;
-    sampler2D sampler;
-};
+// struct OptionalSampler2D {
+//     bool has_texture;
+//     sampler2D sampler;
+// };
 
-uniform mat4 world;
+// jdk: uniforms outside the uniform buffer are all just set once per run of application or max once per frame
 uniform mat4 view;
 uniform mat4 projection;
 
-uniform bool has_skin;
+uniform sampler2D morph_attrib_pos;
+uniform sampler2D morph_attrib_norm;
+uniform sampler2D morph_attrib_tangent;
+uniform sampler2D morph_attrib_texcoord0;
+
+
+layout (std140, binding = 0) uniform UBO_VS0 {
+    mat4 world;
+    bool has_morph_attrib_pos;
+    bool has_morph_attrib_norm;
+    bool has_morph_attrib_tangent;
+    bool has_morph_attrib_texcoord0;
+    bool has_skin;
+    bool padding0;
+    bool padding1;
+    bool padding2;
+};
+uniform float morph_weights[32];
 uniform mat4 joint_matrices[64];
 
-uniform OptionalSampler2D morph_attrib_pos;
-uniform OptionalSampler2D morph_attrib_norm;
-uniform OptionalSampler2D morph_attrib_tangent;
-uniform OptionalSampler2D morph_attrib_texcoord0;
+// layout (std140) uniform MorphTargetTextureSamplers {
 // jdk: spec allows for color as well...
 // and more texcoords n' stuff
 
-uniform float morph_weights[32];
 
 out vec3 frag_pos;
 out vec3 frag_norm;
 out vec2 frag_texcoord;
 
-vec4 morph_from_texture(OptionalSampler2D morph_attrib) {
+// jdk: of course that parameter is weird, but it makes the main a bit cleaner
+vec4 morph_from_texture(sampler2D morph_attrib, bool has_attrib) {
     vec4 value = vec4(0.0);
-    if(morph_attrib.has_texture) {
-	for(int i = 0; i < int(textureSize(morph_attrib.sampler, 0).y); ++i) {
-	    value += morph_weights[i] * texelFetch(morph_attrib.sampler, ivec2(gl_VertexID, i), 0);
+    if(has_attrib) {
+	for(int i = 0; i < int(textureSize(morph_attrib, 0).y); ++i) {
+	    value += morph_weights[i] * texelFetch(morph_attrib, ivec2(gl_VertexID, i), 0);
 	}
     }
     return value;
@@ -50,10 +64,10 @@ void main() {
 	attrib_weights.z * joint_matrices[attrib_joints.z] +
 	attrib_weights.w * joint_matrices[attrib_joints.w];
 
-    vec3 pos = attrib_pos + morph_from_texture(morph_attrib_pos).rgb;
-    vec3 norm = attrib_norm + morph_from_texture(morph_attrib_norm).rgb;
-    vec3 tangent = attrib_tangent + morph_from_texture(morph_attrib_tangent).rgb;
-    vec2 texcoord0 = attrib_texcoord0 + morph_from_texture(morph_attrib_texcoord0).rg;
+    vec3 pos = attrib_pos + morph_from_texture(morph_attrib_pos, has_morph_attrib_pos).rgb;
+    vec3 norm = attrib_norm + morph_from_texture(morph_attrib_norm, has_morph_attrib_norm).rgb;
+    vec3 tangent = attrib_tangent + morph_from_texture(morph_attrib_tangent, has_morph_attrib_tangent).rgb;
+    vec2 texcoord0 = attrib_texcoord0 + morph_from_texture(morph_attrib_texcoord0, has_morph_attrib_texcoord0).rg;
 
     frag_norm = normalize(transpose(inverse(mat3(animated_world))) * norm);
     frag_pos = (animated_world * vec4(pos, 1.0)).xyz;

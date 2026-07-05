@@ -99,46 +99,52 @@ static GLint get_loc(GLuint id, const char *name) {
     return result;
 }
 
-static OptionalSampler2DLocations get_opt_sampler2d_locations(uint32_t program,
-	const char *struct_name) {
-    return {
-	get_loc(program, cstr_cat(struct_name, ".has_texture", &temp_allocator)),
- 	get_loc(program, cstr_cat(struct_name, ".sampler", &temp_allocator))
-    };
-}
 void setup_main_shader() {
     MainShader &ms = main_shader;
     ms.id = create_shader_vf(JK_MAIN_VS_PATH, JK_MAIN_FS_PATH);
     ms.location_projection             = get_loc(ms.id, "projection");
     ms.location_view                   = get_loc(ms.id, "view");
-    ms.location_world                  = get_loc(ms.id, "world");
-    ms.location_has_skin               = get_loc(ms.id, "has_skin");
+
+    ms.location_morph_attrib_pos       = get_loc(ms.id, "morph_attrib_pos");
+    ms.location_morph_attrib_norm      = get_loc(ms.id, "morph_attrib_norm");
+    ms.location_morph_attrib_tangent   = get_loc(ms.id, "morph_attrib_tangent");
+    ms.location_morph_attrib_texcoord0 = get_loc(ms.id, "morph_attrib_texcoord0");
+
+    ms.location_morph_weights          = get_loc(ms.id, "morph_weights");
     ms.location_joint_matrices         = get_loc(ms.id, "joint_matrices");
 
-    ms.locations_morph_attrib_pos       = get_opt_sampler2d_locations(ms.id, "morph_attrib_pos");
-    ms.locations_morph_attrib_norm      = get_opt_sampler2d_locations(ms.id, "morph_attrib_norm");
-    ms.locations_morph_attrib_tangent   = get_opt_sampler2d_locations(ms.id, "morph_attrib_tangent");
-    ms.locations_morph_attrib_texcoord0 = get_opt_sampler2d_locations(ms.id, "morph_attrib_texcoord0");
-    ms.location_morph_weights          = get_loc(ms.id, "morph_weights");
+    glGenBuffers(1, &ms.ubo_vs0);
+    glBindBuffer(GL_UNIFORM_BUFFER, ms.ubo_vs0);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(UBO_VS0), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, ms.ubo_vs0);
 
-    ms.location_camera_pos             = get_loc(ms.id, "camera_pos");
-    ms.location_metallic_factor        = get_loc(ms.id, "metallic_factor");
-    ms.location_roughness_factor       = get_loc(ms.id, "roughness_factor");
-    ms.locations_metallic_roughness_texture = get_opt_sampler2d_locations(ms.id, "metallic_roughness_texture");
-    ms.location_albedo_factor          = get_loc(ms.id, "albedo_factor");
-    ms.locations_albedo_texture         = get_opt_sampler2d_locations(ms.id, "albedo_texture");
+    glGenBuffers(1, &ms.ubo_fs0);
+    glBindBuffer(GL_UNIFORM_BUFFER, ms.ubo_fs0);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(UBO_FS0), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, ms.ubo_fs0);
+
+    ms.location_camera_pos                 = get_loc(ms.id, "camera_pos");
+    ms.location_metallic_roughness_texture = get_loc(ms.id, "metallic_roughness_texture");
+    ms.location_albedo_texture             = get_loc(ms.id, "albedo_texture");
+
+    // // @NOTE(jdk): this way you can debug uniform buffer layouts
+    // int *uniform_offsets = alloc<int>(64, &temp_allocator);
+    // glGetActiveUniformBlockiv(main_shader.id, glGetUniformBlockIndex(main_shader.id, "UBO_FS0"), GL_UNIFORM_BLOCK_DATA_SIZE, uniform_offsets);
+    // printf("%d\n", *uniform_offsets);
 }
 
 // jdk: those don't change and are important so a picture doesn't get used in a morph target or
 // something
 void main_shader_setup_texture_sampler_indices() {
     glUseProgram(main_shader.id);
-    glUniform1i(main_shader.locations_albedo_texture.sampler,             JM_ITEX_ALBEDO);
-    glUniform1i(main_shader.locations_metallic_roughness_texture.sampler, JM_ITEX_METALLIC_ROUGH);
-    glUniform1i(main_shader.locations_morph_attrib_pos.sampler,           JM_ITEX_MORPH_POS);
-    glUniform1i(main_shader.locations_morph_attrib_norm.sampler,          JM_ITEX_MORPH_NORM);
-    glUniform1i(main_shader.locations_morph_attrib_tangent.sampler,       JM_ITEX_MORPH_TANGENT);
-    glUniform1i(main_shader.locations_morph_attrib_texcoord0.sampler,     JM_ITEX_MORPH_TEXCOORD0);
+    glUniform1i(main_shader.location_albedo_texture,             JM_ITEX_ALBEDO);
+    glUniform1i(main_shader.location_metallic_roughness_texture, JM_ITEX_METALLIC_ROUGH);
+    glUniform1i(main_shader.location_morph_attrib_pos,           JM_ITEX_MORPH_POS);
+    glUniform1i(main_shader.location_morph_attrib_norm,          JM_ITEX_MORPH_NORM);
+    glUniform1i(main_shader.location_morph_attrib_tangent,       JM_ITEX_MORPH_TANGENT);
+    glUniform1i(main_shader.location_morph_attrib_texcoord0,     JM_ITEX_MORPH_TEXCOORD0);
     glUseProgram(0);
 }
 

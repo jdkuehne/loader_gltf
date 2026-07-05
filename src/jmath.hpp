@@ -24,6 +24,9 @@ typedef union Vec3F32 {
 typedef Vec3F32 Vec3;
 typedef Vec2F32 Vec2;
 
+static_assert(sizeof(Vec2) == 8);
+static_assert(sizeof(Vec3) == 12);
+
 // jdk: cross doesn't even exist for vec2 but for consistency it's still called cross_vec3
 
 Vec3 vec3           (float x, float y, float z);
@@ -99,7 +102,7 @@ float  *mat4_getp             (Mat4 *m, uint64_t ln, uint64_t col);
 float  *mat4_getp_xy          (Mat4 *m, uint64_t x, uint64_t y);
 Mat4  mat4_add              (Mat4 a, Mat4 b);
 Mat4  mat4_sub              (Mat4 a, Mat4 b);
-Mat4  mat4_mul              (Mat4 a, Mat4 b);
+Mat4 mat4_mul(const Mat4 &a, const Mat4 &b);
 Mat4  mat4_div              (Mat4 a, Mat4 b);
 Mat4  mat4_inv              (Mat4 m);
 Mat4  mat4_mul3             (Mat4 a, Mat4 b, Mat4 c);
@@ -356,7 +359,7 @@ Quat slerp(Quat a, Quat b, float p) {
     }
     if(cos_omega > JK_QUAT_ALMOST_ONE) {
 	// jdk: linear interpolation if very small difference
-	float ka = 1.0 - p;
+	float ka = 1.f - p;
 	float kb = p;
 	return quat_normalize(_quat_add_two_scaled(a, ka, b, kb));
     }
@@ -365,8 +368,8 @@ Quat slerp(Quat a, Quat b, float p) {
     float sin_omega_inverse = 1.f / sin_omega;
     float pa = (1 - p);
     float pb = p;
-    float ka = sin(pa * omega) * sin_omega_inverse;
-    float kb = sin(pb * omega) * sin_omega_inverse;
+    float ka = sinf(pa * omega) * sin_omega_inverse;
+    float kb = sinf(pb * omega) * sin_omega_inverse;
     return _quat_add_two_scaled(a, ka, b, kb);
 }
 
@@ -390,15 +393,15 @@ float  mat4_get_xy  (Mat4 *m, uint64_t x, uint64_t y)    { return m->v[x][y]; }
 float *mat4_getp    (Mat4 *m, uint64_t ln, uint64_t col) { return &m->v[col][ln]; }
 float *mat4_getp_xy (Mat4 *m, uint64_t x, uint64_t y)    { return &m->v[x][y]; }
 
-Mat4 mat4_mul(Mat4 a, Mat4 b) {
+Mat4 mat4_mul(const Mat4 &a, const Mat4 &b) {
     Mat4 result = {0};
     for(uint64_t col = 0; col < 4; ++col) {
 	for(uint64_t ln = 0; ln < 4; ++ln) {
-	    *mat4_getp(&result, ln, col) =
-		mat4_get(&a, ln, 0) * mat4_get(&b, 0, col) +
-		mat4_get(&a, ln, 1) * mat4_get(&b, 1, col) +
-		mat4_get(&a, ln, 2) * mat4_get(&b, 2, col) +
-		mat4_get(&a, ln, 3) * mat4_get(&b, 3, col);
+	    result.v[col][ln] =
+		a.v[0][ln] * b.v[col][0] +
+		a.v[1][ln] * b.v[col][1] +
+		a.v[2][ln] * b.v[col][2] +
+		a.v[3][ln] * b.v[col][3];
 	}
     }
     return result;

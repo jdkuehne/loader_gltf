@@ -78,7 +78,7 @@ static void _list_ensure_init(List<T> *list) {
 template <typename T>
 static void _list_ensure_cap_for_push(List<T> *list) {
     if(list->len + 1 > list->cap) {
-	uint64_t new_cap = ceil(1.5 * (list->cap + 1));
+	uint64_t new_cap = (uint64_t)ceil(1.5 * (list->cap + 1));
 	T *temp = list->buf;
 	list->buf = (T *)malloc(new_cap * sizeof(T));
 	memcpy(list->buf, temp, list->len * sizeof(T));

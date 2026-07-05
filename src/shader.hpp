@@ -15,37 +15,48 @@
 #define JK_MAIN_VS_PATH "./src/shaders/main_vs.glsl"
 #define JK_MAIN_FS_PATH "./src/shaders/main_fs.glsl"
 
-struct OptionalSampler2DLocations {
-    GLint has_texture;
-    GLint sampler;
+struct UBO_VS0 {
+    Mat4 world;
+    int has_morph_attrib_pos;
+    int has_morph_attrib_norm;
+    int has_morph_attrib_tangent;
+    int has_morph_attrib_texcoord0;
+    int has_skin;
+    int padding0[3];
+};
+
+// jdk: no padding required for this one
+struct UBO_FS0 {
+    Vec3 albedo_factor;
+    float metallic_factor;
+    float roughness_factor;
+    int has_albedo_texture;
+    int has_metallic_channel;
+    int has_roughness_channel;
 };
 
 struct MainShader {
     GLuint id;
+    Mat4 joint_matrices[64];
     // jdk: vertex shader
     GLint location_projection;
     GLint location_view;
-    GLint location_world;
 
-    GLint location_has_skin;
-    GLint location_joint_matrices;
-
-    OptionalSampler2DLocations locations_morph_attrib_pos;
-    OptionalSampler2DLocations locations_morph_attrib_norm;
-    OptionalSampler2DLocations locations_morph_attrib_tangent;
-    OptionalSampler2DLocations locations_morph_attrib_texcoord0;
     GLint location_morph_weights;
+    GLint location_joint_matrices;
+    GLint location_morph_attrib_pos;
+    GLint location_morph_attrib_norm;
+    GLint location_morph_attrib_tangent;
+    GLint location_morph_attrib_texcoord0;
+    GLuint ubo_vs0;
+    UBO_VS0 ubo_vs0_data;
 
     // jdk: fragment shader
     GLint location_camera_pos;
-
-    GLint location_albedo_factor;
-    GLint location_metallic_factor;
-    GLint location_roughness_factor;
-
-    OptionalSampler2DLocations locations_albedo_texture;
-    OptionalSampler2DLocations locations_metallic_roughness_texture;
-
+    GLint location_albedo_texture;
+    GLint location_metallic_roughness_texture;
+    GLuint ubo_fs0;
+    UBO_FS0 ubo_fs0_data;
 } inline main_shader = {};
 
 /*

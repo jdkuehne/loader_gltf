@@ -8,15 +8,16 @@ TextObject *new_text_object(Str8 text) {
     char *text_cstr = cstr_from_str8(text, &temp_allocator);
 
     uint64_t bufsize = text.len * 512;
+    assert(bufsize < JM_INT32_MAX);
     void *buffer = alloc<float>(bufsize, &temp_allocator);
-    uint64_t num_quads = stb_easy_font_print(0.f, 0.f, text_cstr, NULL, buffer, bufsize);
+    uint64_t num_quads = stb_easy_font_print(0.f, 0.f, text_cstr, NULL, buffer, (int)bufsize);
     uint64_t num_indices = num_quads * 6;
     uint64_t indices_bufsize = num_indices * sizeof(uint32_t);
     uint32_t *indices_buffer = alloc<uint32_t>(indices_bufsize, &temp_allocator);
     // jdk: fill a index buffer that draws as if it was GL_QUADS (deprecated opengl feature)
     for(uint64_t i = 0; i < num_quads; ++i) {
 	uint64_t i_offset = 6 * i;
-	uint64_t val_offset = 4 * i;
+	uint32_t val_offset = 4 * (uint32_t)i;
 	indices_buffer[i_offset + 0] = 0 + val_offset;
 	indices_buffer[i_offset + 1] = 1 + val_offset;
 	indices_buffer[i_offset + 2] = 2 + val_offset;
@@ -39,7 +40,7 @@ TextObject *new_text_object(Str8 text) {
 
     uint64_t stride = 3 * sizeof(float) + 4 * sizeof(uint8_t);
     const void *offset_position = (const void *)NULL;
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, offset_position);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, (GLsizei)stride, offset_position);
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -86,9 +87,9 @@ void draw_textbox_no_background(const TextObject *text,
     glBindVertexArray(text->vao);
     glUniform3fv(shader_info->location_fg_color, 1, color.v);
     glUniform1f (shader_info->location_font_scale, font_scale);
-    glUniform2f (shader_info->location_upper_left, offset_x, offset_y);
+    glUniform2f (shader_info->location_upper_left, (float)offset_x, (float)offset_y);
     glUniform2f (shader_info->location_window_size, (float)window_width, (float)window_height);
-    glDrawElements(GL_TRIANGLES, text->num_indices, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, (GLsizei)text->num_indices, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
     glUseProgram(0);
 }

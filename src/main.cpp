@@ -23,8 +23,8 @@
 #define JK_PRINT_ALLOCATOR_STATE 0
 
 // #define JK_FILE_NAME "Material_Tex.gltf"
-#define JK_FILE_NAME "Material_Tex.gltf"
-#define JK_ANIM_NAME "Square"
+#define JK_FILE_NAME "RiggedFigure.gltf"
+#define JK_ANIM_NAME "anim_0"
 
 #define JM_FONT_SCALE 2.f
 
@@ -78,7 +78,6 @@ int main() {
 
 
     double last_time = glfwGetTime();
-    double time_fps_counter = glfwGetTime();
     while(!glfwWindowShouldClose(window)) {
 	set_clear_color_rgb8(0x22, 0x22, 0x22);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -90,14 +89,46 @@ int main() {
 	main_shader_set_view_and_camera(&game.camera);
 
 	// @TODO(jdk): test quat after switching layout
-
-	glUseProgram(main_shader.id);
+ 
+	/* jdk: to animate
 	model->anim.time_ms = game_time_ms_u64();
 	model->anim.name_current = str8(JK_ANIM_NAME);
 	gltf_animate(model);
-	gltf_draw(model, mat4(1.0));
-	glUseProgram(0);
+	*/
 
+	static const int grid[5][5] = {
+	    {1, 1, 0, 1, 1},
+	    {1, 0, 0, 0, 1},
+	    {0, 0, 1, 0, 0},
+	    {1, 0, 0, 0, 1},
+	    {1, 1, 0, 1, 1},
+	};
+	static const int grid2[5][5] = {
+	    {0, 1, 1, 1, 0},
+	    {1, 0, 0, 0, 1},
+	    {1, 0, 0, 0, 1},
+	    {1, 0, 0, 0, 1},
+	    {0, 1, 1, 1, 0},
+	};
+	model->anim.time_ms = game_time_ms_u64();
+	model->anim.name_current = str8(JK_ANIM_NAME);
+	gltf_animate(model);
+	glUseProgram(main_shader.id);
+	for(int z = 0; z < 4; ++z) {
+	    for(int y = 0; y < 40; ++y) {
+		for(int x = 0; x < 40; ++x) {
+		    Vec3 translation = {x * 2.f, 4.f * z, y * -2.f};
+		    if(grid2[y%5][x%5]) {
+			gltf_draw(model, make_mat4_translate(translation));
+		    }
+		    if(grid[y%5][x%5]) {
+			Vec3 translation2 = vec3_add(translation, vec3(0.f, (4.f * z + 2.f), 0.f));
+			gltf_draw(model, make_mat4_translate(vec3_add(translation, vec3(0.f, 2.f, 0.f))));
+		    }
+		}
+	    }
+	}
+	glUseProgram(0);
 	//##################################################
 	// jdk: text rendering
 	draw_textbox_no_background(text1, vec3_rgb8(180, 120, 80), JM_FONT_SCALE,

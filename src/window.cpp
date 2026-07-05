@@ -1,7 +1,7 @@
 #include "window.hpp"
 
 //glfw callbacks
-static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+static void key_callback(GLFWwindow *window, int key, int /*scancode*/, int action, int /*mode*/) {
     if(action == GLFW_PRESS) {
 	switch(key) {
 	    case GLFW_KEY_ESCAPE: {
@@ -12,14 +12,14 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
     }
 }
 
-static void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+static void framebuffer_size_callback(GLFWwindow */*window*/, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-static void APIENTRY gl_debug_message_callback(GLenum source,
-	GLenum type, GLuint id, GLenum severity,
-	GLsizei length, const GLchar *message,
-	const void *userParam) {
+static void APIENTRY gl_debug_message_callback(GLenum /*source*/,
+	GLenum /*type*/, GLuint /*id*/, GLenum severity,
+	GLsizei /*length*/, const GLchar *message,
+	const void */*userParam*/) {
     switch(severity) {
 	case GL_DEBUG_SEVERITY_HIGH: {
 	    printf("GL SEVERE: %s\n", message);
@@ -61,16 +61,17 @@ GLFWwindow *window_setup() {
 
     //OpenGL features
     glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_CULL_FACE);
 
     // glEnable(GL_BLEND);
     // glEnable(GL_FRAMEBUFFER_SRGB);
-    // glEnable(GL_CULL_FACE);
     // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // glfw Callbacks
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
     glDebugMessageCallback(gl_debug_message_callback, NULL);
+    glfwSwapInterval(1);
     return window;
 }
 

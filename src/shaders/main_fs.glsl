@@ -1,10 +1,5 @@
 #version 430 core
 
-struct OptionalSampler2D {
-    bool has_texture;
-    sampler2D sampler;
-};
-
 out vec4 frag_color;
 
 in vec3 frag_pos;
@@ -13,11 +8,20 @@ in vec2 frag_texcoord;
 
 uniform vec3 camera_pos;
 
-uniform vec3 albedo_factor = vec3(0.6);
-uniform OptionalSampler2D albedo_texture;
-uniform float roughness_factor = 0.5;
-uniform float metallic_factor = 0.5;
-uniform OptionalSampler2D metallic_roughness_texture;
+layout (std140, binding = 1) uniform UBO_FS0 {
+    vec3 albedo_factor;
+    float metallic_factor;
+    float roughness_factor;
+    bool has_albedo_texture;
+    bool has_metallic_channel;
+    bool has_roughness_channel;
+};
+
+// uniform vec3 albedo_factor = vec3(0.6);
+uniform sampler2D albedo_texture;
+// uniform float roughness_factor = 0.5;
+// uniform float metallic_factor = 0.5;
+uniform sampler2D metallic_roughness_texture;
 
 
 #define jm_pow2(x) ((x) * (x))
@@ -25,16 +29,16 @@ uniform OptionalSampler2D metallic_roughness_texture;
 #define jm_pow4(x) ((x) * (x) * (x) * (x))
 
 void main() {
-    float metallic = metallic_factor;
-    float roughness = roughness_factor;
-    vec3 albedo = (albedo_texture.has_texture ? texture(albedo_texture.sampler, frag_texcoord).rgb : vec3(1.0)) * albedo_factor;
+    float metallic = (has_metallic_channel ? texture(metallic_roughness_texture, frag_texcoord).x : 1.0) * metallic_factor;
+    float roughness = (has_roughness_channel ? texture(metallic_roughness_texture, frag_texcoord).y : 1.0) * roughness_factor;
+    vec3 albedo = (has_albedo_texture ? texture(albedo_texture, frag_texcoord).rgb : vec3(1.0)) * albedo_factor;
     // vec3 albedo = vec3(0.0);
     const float pi = 3.14159;
     const float pi_half = pi/2.0;
     const float one_over_pi = 1.0/pi;
 
-    const vec3 light_pos = vec3(-2.0, 2.0, 4.0);
-    const vec3 light_color = vec3(20.0);
+    const vec3 light_pos = vec3(7.0, 5.0, -7.0);
+    const vec3 light_color = vec3(35.0);
 
     vec3 n = frag_norm;
     vec3 l = normalize(light_pos - frag_pos);
@@ -51,11 +55,12 @@ void main() {
     vec3 specular_color = mix(vec3(0.04) /*dielectric*/, albedo, metallic);
     vec3 diffuse_color = (1.0 - metallic) * albedo;
 
-    float rough = 0.1 + 0.9 * roughness;
-    float gloss = (1.0 - jm_pow4(rough));
-    vec3 specular = one_over_pi * rough / (1.0 - (dot_nh*dot_nh) * gloss) * specular_color;
+    float s_factor = 1.5 * (1.0 - roughness);
+    float s_exponent = 1 - jm_pow4(roughness);
+    float s_offset = roughness * one_over_pi;
+    vec3 specular = (s_factor * pow(dot_nh, s_exponent) + s_offset) * specular_color;
     vec3 diffuse = one_over_pi * diffuse_color;
-    vec3 ambient = 0.03 * albedo;
+    vec3 ambient = 0.05 * albedo;
     vec3 result_color = (diffuse + specular) * light_power_in + ambient;
 
     frag_color = vec4(result_color, 1.0);

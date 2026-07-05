@@ -102,7 +102,8 @@ static uint32_t *get_morph_attrib_texture_variable_ptr(PrimMeta *x, const char *
 	if(cstr_equal(name, map[i].name))
 	    return map[i].p;
     }
-    printf("morph target \"%s\", could not be assigned a texture variable, extend PrimMeta!", name);
+    printf("morph target \"%s\", could not be assigned a texture variable,"
+	    "extend PrimMeta!", name);
     return NULL;
 }
 
@@ -134,7 +135,9 @@ static Str8 get_anim_sampler_accessor_data(GLTFModel *model,
     return str8_substr(view_data, offset, size);
 }
 
-static inline uint64_t step_time_ms(float *buf_s, uint64_t i) { return (uint64_t)(buf_s[i] * 1000.f); }
+static inline uint64_t step_time_ms(float *buf_s, uint64_t i) {
+    return (uint64_t)(buf_s[i] * 1000.f);
+}
 static AnimStep get_anim_step(ChannelMeta *channel_meta, uint64_t time_ms) {
     float *time_buffer_s = (float *)channel_meta->input.ptr;
     uint64_t num_frames = channel_meta->num_frames;
@@ -152,15 +155,6 @@ static AnimStep get_anim_step(ChannelMeta *channel_meta, uint64_t time_ms) {
     }
     assert(0 && "invalid animation step");
     return {};
-}
-
-static int skin_joints_data_index_of_joint(SkinJointsData *skin_data, cgltf_node *joint) {
-    for(uint64_t i = 0; i < skin_data->len; ++i) {
-	if(skin_data->joints[i] == joint) {
-	    return i;
-	}
-    }
-    return JK_NODE_IS_NOT_SKIN_JOINT;
 }
 
 //##################################################
@@ -281,6 +275,8 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 		    uint32_t texture = 0;
 		    glGenTextures(1, &texture);
 		    glBindTexture(GL_TEXTURE_2D, texture);
+		    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img_width, img_height, 0, format,
 			    GL_UNSIGNED_BYTE, img_data);
 		    glGenerateMipmap(GL_TEXTURE_2D);
@@ -326,8 +322,8 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 	    glBindBuffer(GL_ARRAY_BUFFER, prim_meta->vbo);
 	    // TODO(jdk): always static draw???
 	    glBufferData(GL_ARRAY_BUFFER, full_buffer_size, NULL, GL_STATIC_DRAW);
-	    uint64_t sub_data_offset = 0;
-	    for(uint64_t igroup = 0; igroup < view_attrib_groups.len; ++igroup) {
+	    size_t sub_data_offset = 0;
+	    for(size_t igroup = 0; igroup < view_attrib_groups.len; ++igroup) {
 		AttribGroup *group = &view_attrib_groups.buf[igroup];
 		if(group->len <= 0)
 		    // @TODO(jdk): is that what should be done here?
@@ -336,19 +332,21 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 		Str8 attrib_data = get_view_bin_data(model_result, view, params->bin_dir);
 		glBufferSubData(GL_ARRAY_BUFFER, sub_data_offset, view->size,
 			(const void *)attrib_data.ptr);
-		for(uint64_t iattrib = 0; iattrib < group->len; ++iattrib) {
+		for(size_t iattrib = 0; iattrib < group->len; ++iattrib) {
 		    cgltf_attribute *attrib = group->buf[iattrib];
 		    GLenum component_type =
 			gl_enum_from_cgltf_component_type(attrib->data->component_type);
 		    uint64_t component_count = cgltf_type_component_count(attrib->data->type);
-		    int location = get_attrib_location(str8(attrib->name));
-		    uint64_t offset = sub_data_offset + attrib->data->offset;
-		    uint64_t stride = attrib->data->buffer_view->stride;
+		    GLint location = get_attrib_location(str8(attrib->name));
+		    uint64_t offset = sub_data_offset + (GLsizei)attrib->data->offset;
+		    uint64_t stride = (GLsizei)attrib->data->buffer_view->stride;
 		    if(attrib->type == cgltf_attribute_type_joints) {
-			glVertexAttribIPointer(location, component_count, component_type, stride,
+			glVertexAttribIPointer(location, (GLsizei)component_count,
+				component_type, (GLsizei)stride,
 				(const void *)offset);
 		    } else {
-			glVertexAttribPointer(location, component_count, component_type, GL_FALSE, stride,
+			glVertexAttribPointer(location, (GLsizei)component_count,
+				component_type, GL_FALSE, (GLsizei)stride,
 				(const void *)offset);
 		    }
 		    glEnableVertexAttribArray(location);
@@ -384,11 +382,12 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 		    if(*texture_dest == 0) {
 			glGenTextures(1, texture_dest);
 			glBindTexture(GL_TEXTURE_2D, *texture_dest);
-			glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, count, prim->targets_count);
+			glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, (GLsizei)count,
+				(GLsizei)prim->targets_count);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		    }
 		    glBindTexture(GL_TEXTURE_2D, *texture_dest);
-		    glTexSubImage2D(GL_TEXTURE_2D, 0 , 0, itarget, count, 1,
+		    glTexSubImage2D(GL_TEXTURE_2D, 0 , 0, (GLsizei)itarget, (GLsizei)count, 1,
 			    cgltf_type_tex_format(mt_attrib_accessor->type),
 			    gl_enum_from_cgltf_component_type(mt_attrib_accessor->component_type),
 			    mt_attrib_data.ptr + offset);
@@ -408,7 +407,8 @@ static void gltf_load_node_meta(GLTFLoadParams *params, GLTFModel *model_result,
 //##################################################
 // @TAG jdk: apply animated node transforms to model
 
-static void gltf_apply_node_animations(GLTFModel *model, cgltf_node *node, Mat4 parent_world_matrix);
+static void gltf_apply_node_animations(GLTFModel *model, cgltf_node *node,
+	Mat4 parent_world_matrix);
 
 void gltf_animate(GLTFModel *model) {
     cgltf_scene *scene = model->data->scene;
@@ -425,7 +425,8 @@ static void gltf_apply_node_animations(GLTFModel *model, cgltf_node *node,
     assert(node_meta);
 
     Mat4 matrix = {};
-    AnimMeta *anim_meta = link_find(node_meta->anim_first, match_anim, model->anim.name_current);
+    AnimMeta *anim_meta = link_find(node_meta->anim_first, match_anim,
+	    model->anim.name_current);
     if(anim_meta) {
 	Vec3 translation = {};
 	Quat rotation = {};
@@ -538,69 +539,80 @@ void gltf_draw(GLTFModel *model, Mat4 base_matrix) {
 }
 
 static void gltf_draw_node(GLTFModel *model, Mat4 base_matrix, cgltf_node *node) {
-    cgltf_skin *skin = node->skin;
     cgltf_mesh *mesh = node->mesh;
     NodeMeta *node_meta = list_find(&model->nodes_meta, match_node, node);
     assert(node_meta);
     if(mesh) {
-	// jdk: skin
-	if(skin) {
+	main_shader.ubo_vs0_data.world = mat4_mul(base_matrix, node_meta->world_matrix);
+	main_shader.ubo_vs0_data.has_skin = node_meta->has_skin;
+	if(node_meta->has_skin) {
+	    static Mat4 joint_matrices[64];
 	    for(uint64_t ijoint = 0; ijoint < node_meta->skin_data.len; ++ijoint) {
 		Mat4 joint_skeleton_matrix = node_meta->skin_data.skeleton_matrices[ijoint];
 		Mat4 inverse_bind_matrix = node_meta->inverse_bind_matrices.ptr[ijoint];
 		// TODO(jdk): account for doubles
 		Mat4 joint_matrix = mat4_mul(joint_skeleton_matrix, inverse_bind_matrix);
-		uint32_t location_joint_matrix = main_shader.location_joint_matrices + ijoint;
-		glUniformMatrix4fv(location_joint_matrix, 1, GL_FALSE, (float *)&joint_matrix);
+		joint_matrix = mat4_mul(base_matrix, joint_matrix);
+		joint_matrices[ijoint] = joint_matrix;
 	    }
+	    glUniformMatrix4fv(main_shader.location_joint_matrices, (GLsizei)node_meta->skin_data.len, GL_FALSE, (float *)joint_matrices);
 	}
-	glUniform1i(main_shader.location_has_skin, node_meta->has_skin);
-
-	// jdk: world
-	Mat4 final_matrix = mat4_mul(base_matrix, node_meta->world_matrix);
-	glUniformMatrix4fv(main_shader.location_world, 1, GL_FALSE, (float *)&final_matrix);
-	// jdk: morph weights
-	glUniform1fv(main_shader.location_morph_weights, node_meta->morph_weights.len, node_meta->morph_weights.ptr);
+	glUniform1fv(main_shader.location_morph_weights, (GLsizei)node_meta->morph_weights.len,
+		node_meta->morph_weights.ptr);
 
 	for(uint64_t iprim = 0; iprim < mesh->primitives_count; ++iprim) {
 	    cgltf_primitive *prim = &mesh->primitives[iprim];
-	    PrimMeta *info = stack_find(&node_meta->primitives_meta, match_prim, prim);
-	    //jdk: material
-	    if(info->metallic_roughness) {
-		glUniform3fv(main_shader.location_albedo_factor, 1,
-			info->metallic_roughness->base_color_factor);
-		glUniform1f(main_shader.location_roughness_factor,
-			info->metallic_roughness->roughness_factor);
-		glUniform1f(main_shader.location_metallic_factor,
-			info->metallic_roughness->metallic_factor);
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, info->base_color_texture_id);
-		glUniform1i(main_shader.locations_albedo_texture.has_texture, info->base_color_texture_id != 0);
-		// glActiveTexture(GL_TEXTURE1);
-		// glBindTexture(GL_TEXTURE_2D, info->base_color_texture_id);
-
+	    PrimMeta *prim_meta = stack_find(&node_meta->primitives_meta, match_prim, prim);
+	    if(prim_meta->morph_attrib_pos) {
+		glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_POS);
+		glBindTexture(GL_TEXTURE_2D, prim_meta->morph_attrib_pos);
 	    }
+	    if(prim_meta->morph_attrib_norm) {
+		glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_NORM);
+		glBindTexture(GL_TEXTURE_2D, prim_meta->morph_attrib_norm);
+	    }
+	    if(prim_meta->morph_attrib_tangent) {
+		glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_TANGENT);
+		glBindTexture(GL_TEXTURE_2D, prim_meta->morph_attrib_tangent);
+	    }
+	    if(prim_meta->morph_attrib_texcoord0) {
+		glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_TEXCOORD0);
+		glBindTexture(GL_TEXTURE_2D, prim_meta->morph_attrib_texcoord0);
+	    }
+	    // @TODO(jdk): check that these are actually 0 when not used
+	    main_shader.ubo_vs0_data.has_morph_attrib_pos = prim_meta->morph_attrib_pos != 0;
+	    main_shader.ubo_vs0_data.has_morph_attrib_norm = prim_meta->morph_attrib_norm != 0;
+	    main_shader.ubo_vs0_data.has_morph_attrib_tangent = prim_meta->morph_attrib_tangent != 0;
+	    main_shader.ubo_vs0_data.has_morph_attrib_texcoord0 = prim_meta->morph_attrib_texcoord0 != 0;
+	    glBindBuffer(GL_UNIFORM_BUFFER, main_shader.ubo_vs0);
+	    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(UBO_VS0), &main_shader.ubo_vs0_data);
+	    // ##############################################################################
 
-	    // jm_trap();
-	    glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_POS);
-	    glBindTexture(GL_TEXTURE_2D, info->morph_attrib_pos);
-	    glUniform1i(main_shader.locations_morph_attrib_pos.has_texture, info->morph_attrib_pos != 0);
-	    
-	    glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_NORM);
-	    glBindTexture(GL_TEXTURE_2D, info->morph_attrib_norm);
-	    glUniform1i(main_shader.locations_morph_attrib_norm.has_texture, info->morph_attrib_norm != 0);
+	    // @TODO(jdk): what are these values, when data in json is missing, does cgltf default initialize them?
+	    // does cgltf create a default pbr_metallic_roughness even when no material is provided at all?
+	    if(prim_meta->base_color_texture_id) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, prim_meta->base_color_texture_id);
+	    }
+	    if(prim_meta->metallic_roughness) {
+		main_shader.ubo_fs0_data.albedo_factor = *(Vec3 *)prim_meta->metallic_roughness->base_color_factor;
+		main_shader.ubo_fs0_data.metallic_factor = prim_meta->metallic_roughness->metallic_factor;
+		main_shader.ubo_fs0_data.roughness_factor = prim_meta->metallic_roughness->roughness_factor;
+	    } else {
+		main_shader.ubo_fs0_data.albedo_factor = vec3(1.f);
+		main_shader.ubo_fs0_data.metallic_factor = 0.f;
+		main_shader.ubo_fs0_data.roughness_factor = 1.f;
+	    }
+	    main_shader.ubo_fs0_data.has_albedo_texture = prim_meta->base_color_texture_id != 0;
+	    main_shader.ubo_fs0_data.has_metallic_channel = 0;
+	    main_shader.ubo_fs0_data.has_roughness_channel = 0;
+	    glBindBuffer(GL_UNIFORM_BUFFER, main_shader.ubo_fs0);
+	    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(UBO_FS0), &main_shader.ubo_fs0_data);
 
-	    glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_TANGENT);
-	    glBindTexture(GL_TEXTURE_2D, info->morph_attrib_tangent);
-	    glUniform1i(main_shader.locations_morph_attrib_tangent.has_texture, info->morph_attrib_tangent != 0);
+	    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	    glActiveTexture(GL_TEXTURE0 + JM_ITEX_MORPH_TEXCOORD0);
-	    glBindTexture(GL_TEXTURE_2D, info->morph_attrib_texcoord0);
-	    glUniform1i(main_shader.locations_morph_attrib_texcoord0.has_texture, info->morph_attrib_texcoord0 != 0);
-
-	    glBindVertexArray(info->vao);
-	    glDrawElements(GL_TRIANGLES, info->indices_count, info->indices_type, NULL);
+	    glBindVertexArray(prim_meta->vao);
+	    glDrawElements(GL_TRIANGLES, (GLsizei)prim_meta->indices_count, prim_meta->indices_type, NULL);
 	    glBindVertexArray(0);
 	}
     }
